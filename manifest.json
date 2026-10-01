@@ -1,0 +1,17 @@
+{
+  "name": "Sigma Online Web App",
+  "short_name": "Sigma App",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%231e3a8a'/><path d='M370 140 H160 L265 256 L160 372 H370 V338 H225 L300 256 L225 174 H370 Z' fill='%23f59e0b'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
