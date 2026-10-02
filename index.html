@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BAI AVABAI HIGHSCHOOL, VALSAD - Question Paper Generator</title>
+  <title>BAI AVABAI HIGHSCHOOL, VALSAD - Question Paper Generator & GUJCET Suite</title>
   
   <!-- Dynamic PWA Manifest -->
   <link id="manifest-placeholder" rel="manifest">
@@ -12,11 +12,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="BAI AVABAI">
-  <meta name="description" content="Official Examination and Blueprint Suite for Bai Avabai Highschool, Valsad by Kalpesh H Tailor, M.Sc, B.Ed, GSET (MATHS)">
+  <meta name="description" content="Official Examination, GUJCET & Blueprint Suite for Bai Avabai Highschool, Valsad by Kalpesh H Tailor, M.Sc, B.Ed, GSET (MATHS)">
 
   <!-- Embedded Mathematical Sigma Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%231e3a8a'/><path d='M370 140 H160 L265 256 L160 372 H370 V338 H225 L300 256 L225 174 H370 Z' fill='%23f59e0b'/></svg>">
-  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%231e3a8a'/><path d='M370 140 H160 L265 256 L160 372 H370 V338 H225 L300 256 L225 174 H370 Z' fill='%23f59e0b'/></svg>">
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%231e3a8a'/><path d='M370 140 H160 L265 256 L160 372 H370 V338 H225 L300 256 L225 174 H370 Z' fill='%23f59e0b'/></svg>">
+  <link id="apple-touch-icon-link" rel="apple-touch-icon">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -46,12 +46,31 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <!-- Firebase Compat Web SDK (Authentication & Cloud Firestore) -->
+  <!-- MathJax Configuration for LaTeX Math -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Firebase Compat Web SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <style>
+    .paper-cambria-font {
+      font-family: 'Cambria', 'Georgia', serif !important;
+    }
+
     @media print {
       body * {
         visibility: hidden !important;
@@ -65,17 +84,21 @@
         top: 0 !important;
         width: 100% !important;
         margin: 0 !important;
-        padding: 10mm 14mm !important;
+        padding: 8mm !important;
         box-shadow: none !important;
-        border: none !important;
         background: white !important;
         color: black !important;
+        font-family: 'Cambria', 'Georgia', serif !important;
       }
       .no-print {
         display: none !important;
       }
-      .page-break {
-        page-break-before: always;
+      .print-page-box {
+        border: 2px solid #000000 !important;
+        padding: 10mm 12mm !important;
+        min-height: 280mm !important;
+        box-sizing: border-box !important;
+        page-break-after: always;
       }
     }
     
@@ -85,7 +108,10 @@
       background: white;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
       margin: 0 auto;
-      padding: 16mm 15mm;
+      padding: 10mm 12mm;
+      border: 2.5px solid #0f172a;
+      box-sizing: border-box;
+      font-family: 'Cambria', 'Georgia', serif;
     }
     
     .watermark {
@@ -104,6 +130,25 @@
       pointer-events: none;
       z-index: 0;
     }
+
+    /* Guaranteed strict single horizontal line for MCQ options */
+    .mcq-options-inline {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      justify-content: flex-start !important;
+      align-items: baseline !important;
+      width: 100% !important;
+      margin-top: 4px !important;
+      padding-left: 18px !important;
+      overflow-x: auto !important;
+      gap: 16px !important;
+    }
+    .mcq-option-col {
+      flex: 1 1 auto !important;
+      white-space: nowrap !important;
+      min-width: 0 !important;
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col md:flex-row">
@@ -114,7 +159,7 @@
       <div class="w-9 h-9 rounded-lg bg-amber-400 text-brand-900 font-serif font-black text-2xl flex items-center justify-center shadow">Σ</div>
       <div class="leading-tight">
         <h1 class="text-xs font-bold tracking-wide">BAI AVABAI HIGHSCHOOL</h1>
-        <p class="text-[10px] text-amber-300 font-semibold">VALSAD</p>
+        <p class="text-[10px] text-amber-300 font-semibold">VALSAD • GUJCET & GSEB</p>
       </div>
     </div>
     <div class="flex items-center space-x-2">
@@ -142,7 +187,7 @@
       </div>
     </div>
 
-    <!-- PROFILE SECTION: KALPESH H TAILOR WITH FIXED DESIGNATION M.Sc,B.Ed,GSET(MATHS) -->
+    <!-- PROFILE SECTION: KALPESH H TAILOR -->
     <div class="p-3.5 mx-3 my-2.5 bg-brand-800/80 rounded-xl border border-brand-700/60 shadow-inner">
       <div class="flex items-center space-x-3">
         <div class="relative group cursor-pointer" onclick="openPhotoModal()" title="Click to Change Profile Picture">
@@ -170,20 +215,18 @@
 
     <!-- PRIMARY ACTION BUTTONS -->
     <div class="px-3 pb-2 space-y-2">
-      <!-- INSTALL APP BUTTON -->
       <button onclick="installAppDirectly()" class="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-brand-950 font-black rounded-lg text-xs shadow-md transition transform active:scale-98">
         <i data-lucide="smartphone" class="w-4 h-4"></i>
         <span>INSTALL APP</span>
       </button>
 
-      <!-- ADD CHAPTER BUTTON -->
       <button onclick="openAddChapterModal()" class="w-full flex items-center justify-center space-x-2 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs shadow transition">
         <i data-lucide="folder-plus" class="w-4 h-4"></i>
         <span>+ ADD CHAPTER TO SUBJECT</span>
       </button>
     </div>
 
-    <!-- DATA BACKUP SECTION IN SIDEBAR (EXPORT & IMPORT) -->
+    <!-- DATA BACKUP SECTION IN SIDEBAR -->
     <div class="px-3 pb-2">
       <div class="bg-brand-950/70 p-2.5 rounded-lg border border-brand-800 space-y-1.5">
         <div class="flex items-center justify-between text-[11px] font-bold text-amber-300">
@@ -194,12 +237,12 @@
           <span class="text-[9px] text-emerald-400 font-mono">100% SAFE</span>
         </div>
         <div class="grid grid-cols-2 gap-1.5 pt-0.5">
-          <button onclick="exportFullDataBackup()" class="flex items-center justify-center space-x-1 py-1 px-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-text-[10px] font-bold shadow">
-            <i data-lucide="upload" class="w-3 h-3"></i>
+          <button onclick="exportFullDataBackup()" class="flex items-center justify-center space-x-1 py-1 px-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded text-[10px] font-bold shadow">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
             <span>Export Backup</span>
           </button>
           <button onclick="document.getElementById('backup-file-input').click()" class="flex items-center justify-center space-x-1 py-1 px-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-[10px] font-bold shadow">
-            <i data-lucide="download" class="w-3 h-3"></i>
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
             <span>Import Backup</span>
           </button>
         </div>
@@ -211,14 +254,22 @@
     <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
       <button onclick="switchTab('tab-generator')" id="nav-generator" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2 rounded-lg text-xs font-semibold transition bg-blue-600 text-white shadow">
         <i data-lucide="file-plus-2" class="w-4 h-4"></i>
-        <span>Paper Generator</span>
+        <span>Paper Generator (GSEB)</span>
+      </button>
+
+      <button onclick="switchTab('tab-gujcet')" id="nav-gujcet" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2 rounded-lg text-xs font-semibold transition hover:bg-brand-800 hover:text-white text-blue-100">
+        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+        <div class="flex items-center justify-between flex-1">
+          <span class="font-bold text-amber-200">GUJCET Exam Builder</span>
+          <span class="text-[9px] bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded font-black font-mono">MCQ 40M</span>
+        </div>
       </button>
 
       <button onclick="switchTab('tab-blueprint')" id="nav-blueprint" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2 rounded-lg text-xs font-semibold transition hover:bg-brand-800 hover:text-white text-blue-100">
         <i data-lucide="grid" class="w-4 h-4"></i>
         <div class="flex items-center justify-between flex-1">
           <span>Blueprint Matrix</span>
-          <span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded font-mono font-bold">1M-4M+</span>
+          <span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded font-mono font-bold">GSEB & GUJCET</span>
         </div>
       </button>
 
@@ -268,37 +319,32 @@
         <span class="text-xs text-slate-300">|</span>
         <span id="active-tab-title" class="text-xs font-semibold text-slate-600">Question Paper Workspace</span>
         <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200 hidden sm:inline-flex items-center space-x-1">
-          <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i>
+          <i data-lucide="shield-check" class="w-3 practical h-3 text-emerald-600"></i>
           <span>Data Protected</span>
         </span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5">
-        <!-- INSTALL APP BUTTON IN TOP BAR -->
         <button onclick="installAppDirectly()" class="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-brand-950 text-xs font-black rounded-lg shadow transition transform active:scale-95">
           <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
           <span>INSTALL APP</span>
         </button>
 
-        <!-- SAVE AS WORD (.DOC) -->
         <button onclick="exportToWordDoc()" class="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-blue-700 text-white text-xs font-semibold rounded-lg shadow hover:bg-blue-800 transition">
           <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
           <span>Save as Word</span>
         </button>
 
-        <!-- PRINT WITH ANSWERS -->
         <button onclick="printPaperWithAnswers()" class="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow hover:bg-emerald-700 transition">
           <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
           <span>Print with Answers</span>
         </button>
 
-        <!-- PRINT BLUEPRINT -->
         <button onclick="printBlueprintMatrix()" class="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-purple-700 text-white text-xs font-semibold rounded-lg shadow hover:bg-purple-800 transition">
           <i data-lucide="table" class="w-3.5 h-3.5"></i>
           <span>Print Blueprint</span>
         </button>
 
-        <!-- STANDARD PRINT / PDF (WITHOUT ANSWERS) -->
         <button onclick="printStandardPaper()" class="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-brand-900 text-white text-xs font-semibold rounded-lg shadow hover:bg-brand-800 transition">
           <i data-lucide="printer" class="w-3.5 h-3.5"></i>
           <span>Print (Exam Paper)</span>
@@ -309,11 +355,10 @@
     <!-- MAIN SCROLLABLE CONTENT BODY -->
     <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-100">
 
-      <!-- TAB 1: PAPER GENERATOR & LIVE PREVIEW -->
+      <!-- TAB 1: GENERAL GSEB PAPER GENERATOR -->
       <section id="tab-generator" class="tab-pane max-w-7xl mx-auto space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          <!-- Generator Configuration Panel -->
           <div class="lg:col-span-4 space-y-4">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
               <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -335,7 +380,6 @@
                   <input type="text" id="paper-exam-title" value="FIRST TERM EXAMINATION - 2026-27" class="w-full border rounded-lg p-2 font-medium border-slate-300">
                 </div>
 
-                <!-- ALL GSEB STANDARDS -->
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="block text-slate-600 font-semibold mb-1">Standard (Std)</label>
@@ -382,7 +426,6 @@
                 </div>
               </div>
 
-              <!-- Action buttons -->
               <div class="pt-2 flex flex-col gap-2">
                 <button onclick="renderLivePaper()" class="w-full py-2 bg-brand-700 text-white rounded-lg font-bold hover:bg-brand-800 transition flex items-center justify-center space-x-2 text-xs">
                   <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
@@ -409,7 +452,8 @@
                   <option value="SECTION C">SECTION C (Detailed / 3 Marks)</option>
                   <option value="SECTION D">SECTION D (Long / Case / 4 Marks)</option>
                 </select>
-                <textarea id="quick-q-text" rows="2" placeholder="Question statement..." class="w-full border rounded-lg p-2 border-slate-300"></textarea>
+                <textarea id="quick-q-text" rows="2" placeholder="Question statement (Cambria font / LaTeX)..." class="w-full border rounded-lg p-2 border-slate-300"></textarea>
+                <input type="text" id="quick-q-options" placeholder="MCQ Options: (A) 1  (B) 2  (C) 3  (D) 4" class="w-full border rounded-lg p-2 border-slate-300 text-xs">
                 <textarea id="quick-q-ans" rows="1" placeholder="Answer / Solution key..." class="w-full border rounded-lg p-2 border-emerald-300 bg-emerald-50/50"></textarea>
                 <div class="flex gap-2">
                   <input type="number" id="quick-q-marks" value="1" min="1" max="10" class="w-20 border rounded-lg p-2 border-slate-300 text-center font-bold" placeholder="Marks">
@@ -421,10 +465,10 @@
             </div>
           </div>
 
-          <!-- Live Academic Paper Preview (A4 Canvas) -->
+          <!-- Canvas Container -->
           <div class="lg:col-span-8 flex flex-col items-center">
             <div class="w-full flex justify-between items-center mb-2 px-1">
-              <span class="text-xs font-semibold text-slate-500">Live Paper Preview (A4 Sheet Layout)</span>
+              <span class="text-xs font-semibold text-slate-500">Live Paper Preview (Cambria Font • Outer Page Border • Swap Enabled)</span>
               <div class="flex items-center space-x-2">
                 <button onclick="renderLivePaper()" class="text-xs text-brand-700 hover:underline flex items-center space-x-1">
                   <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
@@ -433,10 +477,8 @@
               </div>
             </div>
 
-            <!-- Canvas Container -->
-            <div id="printable-paper" class="paper-canvas watermark rounded border border-slate-300 text-slate-900 leading-normal relative">
-              
-              <!-- School Examination Header -->
+            <!-- Page Border Container with Cambria Typography -->
+            <div id="printable-paper" class="paper-canvas watermark paper-cambria-font text-slate-900 leading-normal relative">
               <div class="border-b-2 border-slate-900 pb-3 mb-4 text-center">
                 <div class="flex justify-between items-center mb-1">
                   <div class="w-12 h-12 rounded-lg bg-brand-900 text-amber-300 font-serif font-black text-2xl flex items-center justify-center border border-amber-300">
@@ -452,7 +494,6 @@
                   </div>
                 </div>
 
-                <!-- Exam Meta Table -->
                 <div class="grid grid-cols-4 text-xs font-semibold pt-2 border-t border-slate-300 mt-2 text-left">
                   <div>STD: <span id="view-std" class="font-bold">Std 10</span></div>
                   <div>SUBJECT: <span id="view-sub" class="font-bold">Mathematics (Standard - 12)</span></div>
@@ -461,16 +502,14 @@
                 </div>
               </div>
 
-              <!-- General Instructions -->
               <div class="mb-4 p-2 bg-slate-50 border border-slate-200 text-xs italic rounded">
                 <strong>General Instructions: </strong>
                 <span id="view-instructions">1. All questions are compulsory. 2. Figures to the right indicate full marks. 3. Draw clean diagrams wherever necessary.</span>
               </div>
 
-              <!-- Section & Question Stream -->
+              <!-- Sections Container -->
               <div id="paper-sections-container" class="space-y-6 text-sm"></div>
 
-              <!-- Footer with Fixed Designation of KALPESH H TAILOR -->
               <div class="mt-12 pt-6 border-t border-slate-300 flex justify-between items-end text-xs font-semibold text-slate-700">
                 <div class="text-center">
                   <div class="w-36 border-b border-slate-400 mb-1"></div>
@@ -491,16 +530,98 @@
         </div>
       </section>
 
-      <!-- TAB 2: CHAPTERWISE BLUEPRINT MATRIX -->
+      <!-- TAB 2: GUJCET EXAM BUILDER SECTION -->
+      <section id="tab-gujcet" class="tab-pane max-w-7xl mx-auto space-y-6 hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-black bg-amber-400 text-brand-950 font-mono">GUJCET SPECIAL</span>
+                <h2 class="text-lg font-black text-slate-800">GUJCET Examination Paper Workspace (40 Marks MCQ)</h2>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Dedicated 40-question multiple-choice examination builder for GUJCET with Cambria typesetting.</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="autoPopulateGujcet40Paper()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow flex items-center space-x-1.5">
+                <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
+                <span>Auto-Generate 40 MCQs from Bank</span>
+              </button>
+              <button onclick="switchTab('tab-blueprint'); setMatrixMode('GUJCET');" class="px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-lg shadow flex items-center space-x-1">
+                <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                <span>GUJCET Blueprint Matrix</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-amber-50/70 border border-amber-200 rounded-xl text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">GUJCET Subject:</label>
+              <select id="gujcet-subject" class="w-full border rounded-lg p-2 font-bold bg-white border-slate-300">
+                <option value="Mathematics">Mathematics (40 Marks)</option>
+                <option value="Physics">Physics (40 Marks)</option>
+                <option value="Chemistry">Chemistry (40 Marks)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Medium:</label>
+              <select id="gujcet-medium" class="w-full border rounded-lg p-2 font-semibold bg-white border-slate-300">
+                <option value="Gujarati">Gujarati Medium</option>
+                <option value="English">English Medium</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Exam Duration:</label>
+              <input type="text" id="gujcet-time" value="60 Minutes" class="w-full border rounded-lg p-2 font-medium bg-white border-slate-300">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Negative Marking:</label>
+              <input type="text" id="gujcet-negative" value="0.25 Mark per wrong answer" class="w-full border rounded-lg p-2 font-medium bg-white border-slate-300">
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-4 border border-slate-300 rounded-xl space-y-3 text-xs">
+            <h4 class="font-extrabold text-slate-800 flex items-center space-x-1.5">
+              <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i>
+              <span>Add Single MCQ to GUJCET Paper</span>
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div class="md:col-span-2">
+                <input type="text" id="gujcet-quick-text" placeholder="Question statement..." class="w-full border rounded-lg p-2 bg-white border-slate-300">
+              </div>
+              <div>
+                <input type="text" id="gujcet-quick-options" placeholder="(A) ... (B) ... (C) ... (D) ..." class="w-full border rounded-lg p-2 bg-white border-slate-300 font-mono">
+              </div>
+              <div class="flex space-x-2">
+                <input type="text" id="gujcet-quick-ans" placeholder="Correct (e.g. (A))" class="w-24 border rounded-lg p-2 bg-emerald-50 border-emerald-300 font-bold text-center">
+                <button onclick="addSingleGujcetMcq()" class="flex-1 bg-brand-900 text-white font-bold rounded-lg text-xs hover:bg-brand-800">
+                  Insert MCQ
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+            <span class="font-bold text-brand-900">Current GUJCET Paper Questions: <span id="gujcet-current-count" class="font-mono text-base text-emerald-700 font-black">0</span> / 40</span>
+            <span class="text-slate-500 italic">40 questions form an official GSEB GUJCET subject paper.</span>
+          </div>
+
+          <div id="gujcet-paper-preview" class="border border-slate-300 rounded-xl bg-white p-4 space-y-3 text-xs min-h-[250px] paper-cambria-font">
+            <p class="text-slate-400 text-center py-8">No MCQs added yet. Click <strong>"Auto-Generate 40 MCQs from Bank"</strong> or insert questions manually above.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: CHAPTERWISE BLUEPRINT MATRIX -->
       <section id="tab-blueprint" class="tab-pane max-w-7xl mx-auto space-y-6 hidden">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
             <div>
               <h2 class="text-lg font-black text-slate-800 flex items-center space-x-2">
                 <i data-lucide="grid" class="w-5 h-5 text-brand-700"></i>
-                <span>GSEB Chapterwise Allocation Matrix Blueprint</span>
+                <span>Chapterwise Allocation Matrix Blueprint</span>
               </h2>
-              <p class="text-xs text-slate-500">Configure GSEB chapter question weightages across 1M, 2M, 3M, 4M, and custom marks.</p>
+              <p class="text-xs text-slate-500">Configure GSEB & GUJCET chapter weightages with live Question Bank availability.</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-2">
@@ -518,8 +639,60 @@
               </button>
               <button onclick="applyBlueprintToPaper()" class="px-4 py-1.5 bg-brand-900 hover:bg-brand-800 text-white text-xs font-bold rounded-lg shadow flex items-center space-x-1.5">
                 <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
-                <span>Apply Blueprint to Paper</span>
+                <span>Generate Paper from Matrix</span>
               </button>
+            </div>
+          </div>
+
+          <!-- INTERACTIVE SELECTION PANEL -->
+          <div class="p-4 bg-brand-50 border-2 border-brand-200 rounded-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold text-slate-700">Matrix Exam Type:</span>
+                <div class="inline-flex rounded-lg border border-brand-800 p-0.5 bg-white text-xs font-bold">
+                  <button type="button" id="matrix-mode-gseb" onclick="setMatrixMode('GSEB')" class="px-3 py-1 rounded bg-brand-900 text-white">General GSEB</button>
+                  <button type="button" id="matrix-mode-gujcet" onclick="setMatrixMode('GUJCET')" class="px-3 py-1 rounded text-slate-700 hover:text-brand-900">GUJCET Matrix</button>
+                </div>
+              </div>
+              <span id="matrix-active-filter-badge" class="text-[10px] bg-brand-900 text-amber-300 font-bold px-2 py-0.5 rounded font-mono">Std 10 - Mathematics (Standard - 12)</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Standard (Std):</label>
+                <select id="matrix-filter-std" onchange="syncSubjectDropdown('matrix-filter-std', 'matrix-filter-sub');" class="w-full border border-slate-300 rounded-lg p-2 font-semibold bg-white text-slate-800">
+                  <option value="Std 9">Std 9</option>
+                  <option value="Std 10" selected>Std 10</option>
+                  <option value="Std 11 Science">Std 11 Science</option>
+                  <option value="Std 11 Commerce">Std 11 Commerce</option>
+                  <option value="Std 11 Arts">Std 11 Arts</option>
+                  <option value="Std 12 Science">Std 12 Science</option>
+                  <option value="Std 12 Commerce">Std 12 Commerce</option>
+                  <option value="Std 12 Arts">Std 12 Arts</option>
+                  <option value="GUJCET">GUJCET (Std 11 + 12 Combined)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Subject:</label>
+                <select id="matrix-filter-sub" class="w-full border border-slate-300 rounded-lg p-2 font-semibold bg-white text-slate-800"></select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Medium:</label>
+                <select id="matrix-filter-med" class="w-full border border-slate-300 rounded-lg p-2 font-medium bg-white text-slate-800">
+                  <option value="Gujarati">Gujarati Medium</option>
+                  <option value="English">English Medium</option>
+                  <option value="Hindi">Hindi Medium</option>
+                </select>
+              </div>
+
+              <div class="flex items-end">
+                <button onclick="applyMatrixSelectorFilter()" class="w-full py-2 bg-brand-900 hover:bg-brand-800 text-white font-extrabold rounded-lg shadow flex items-center justify-center space-x-1.5 transition active:scale-95">
+                  <i data-lucide="check-check" class="w-4 h-4 text-amber-400"></i>
+                  <span>Apply & View Chapters</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -534,20 +707,20 @@
               <label class="text-slate-600">Custom Col 2 Mark Value:</label>
               <input type="number" id="custom-weight-2" value="6" min="1" max="20" onchange="recalculateMatrix()" class="w-16 border rounded p-1 font-bold text-center border-slate-300 bg-white">
             </div>
-            <div class="text-slate-500 text-[11px] italic">Columns update instantly in totals.</div>
+            <div class="text-slate-500 text-[11px] italic">Badge underneath shows exact questions available in Question Bank for that Chapter!</div>
           </div>
 
-          <!-- Matrix Table -->
+          <!-- Matrix Table with Filtered Subject Chapters -->
           <div class="overflow-x-auto rounded-lg border border-slate-200" id="blueprint-printable-area">
             <table class="w-full text-xs text-left" id="matrix-table">
               <thead class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                 <tr>
                   <th class="p-3">#</th>
                   <th class="p-3 min-w-[200px]">Chapter Name / Topic</th>
-                  <th class="p-2 text-center w-16">1 Mark</th>
-                  <th class="p-2 text-center w-16">2 Marks</th>
-                  <th class="p-2 text-center w-16">3 Marks</th>
-                  <th class="p-2 text-center w-16">4 Marks</th>
+                  <th class="p-2 text-center w-24">1 Mark (MCQ)</th>
+                  <th class="p-2 text-center w-24">2 Marks</th>
+                  <th class="p-2 text-center w-24">3 Marks</th>
+                  <th class="p-2 text-center w-24">4 Marks</th>
                   <th class="p-2 text-center w-24 bg-amber-50 text-amber-900 border-x border-amber-200" id="matrix-col-c1">Custom (<span class="custom-val-1">5</span>M)</th>
                   <th class="p-2 text-center w-24 bg-amber-50 text-amber-900 border-r border-amber-200" id="matrix-col-c2">Custom (<span class="custom-val-2">6</span>M)</th>
                   <th class="p-2 text-center w-24 bg-blue-50 text-brand-900 font-black">Total Qs</th>
@@ -579,9 +752,9 @@
               <div>
                 <h3 class="text-sm font-black text-slate-800 flex items-center space-x-2">
                   <i data-lucide="history" class="w-4 h-4 text-brand-700"></i>
-                  <span>Previous GSEB Blueprints (Instant Paper Generation)</span>
+                  <span>Previous GSEB & GUJCET Blueprints</span>
                 </h3>
-                <p class="text-xs text-slate-500">Pick any past blueprint matrix below to instantly generate and populate the examination paper.</p>
+                <p class="text-xs text-slate-500">Pick past blueprint matrices to instantly populate the paper.</p>
               </div>
               <button onclick="saveCurrentBlueprintAsPreset()" class="px-3 py-1.5 bg-blue-100 text-brand-900 hover:bg-blue-200 rounded-lg text-xs font-bold flex items-center space-x-1">
                 <i data-lucide="bookmark-plus" class="w-3.5 h-3.5"></i>
@@ -595,17 +768,22 @@
         </div>
       </section>
 
-      <!-- TAB 3: QUESTION BANK -->
+      <!-- TAB 4: QUESTION BANK (GENERAL & GUJCET) -->
       <section id="tab-qbank" class="tab-pane max-w-7xl mx-auto space-y-6 hidden">
-        
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
-              <h2 class="text-base font-black text-slate-800 flex items-center space-x-2">
-                <i data-lucide="database" class="w-5 h-5 text-brand-700"></i>
-                <span>GSEB Question Bank Management</span>
-              </h2>
-              <p class="text-xs text-slate-500">Imported questions stay permanently until manually deleted. Safe and secure.</p>
+              <div class="flex items-center space-x-2">
+                <h2 class="text-base font-black text-slate-800 flex items-center space-x-2">
+                  <i data-lucide="database" class="w-5 h-5 text-brand-700"></i>
+                  <span>Question Bank Management</span>
+                </h2>
+                <div class="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-100 text-xs font-bold">
+                  <button type="button" id="bank-toggle-general" onclick="switchBankType('GENERAL')" class="px-3 py-1 rounded bg-brand-900 text-white shadow-xs">General Question Bank</button>
+                  <button type="button" id="bank-toggle-gujcet" onclick="switchBankType('GUJCET')" class="px-3 py-1 rounded text-slate-700 hover:text-brand-900">GUJCET Question Bank</button>
+                </div>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Switch between regular descriptive GSEB question repository and dedicated GUJCET MCQ repository.</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-2">
@@ -631,9 +809,10 @@
             </div>
           </div>
 
+          <!-- Question Bank Filters -->
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Standard (Std):</label>
+              <label class="block font-bold text-slate-700 mb-1">Standard / Category:</label>
               <select id="filter-std" onchange="syncSubjectDropdown('filter-std', 'filter-sub'); filterQuestionBank();" class="w-full border border-slate-300 rounded-lg p-2 font-medium bg-white">
                 <option value="ALL">All Standards</option>
                 <option value="Std 9">Std 9</option>
@@ -644,11 +823,12 @@
                 <option value="Std 12 Science">Std 12 Science</option>
                 <option value="Std 12 Commerce">Std 12 Commerce</option>
                 <option value="Std 12 Arts">Std 12 Arts</option>
+                <option value="GUJCET">GUJCET Only</option>
               </select>
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">GSEB Subject:</label>
+              <label class="block font-bold text-slate-700 mb-1">Subject:</label>
               <select id="filter-sub" onchange="filterQuestionBank()" class="w-full border border-slate-300 rounded-lg p-2 font-medium bg-white"></select>
             </div>
 
@@ -701,7 +881,7 @@
             <div id="batch-actions-bar" class="items-center space-x-2 hidden">
               <span id="selected-q-count" class="text-xs font-bold text-rose-700">0 selected</span>
               <button onclick="deleteSelectedCheckedQuestions()" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold shadow flex items-center space-x-1">
-                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                 <span>Delete Selected</span>
               </button>
             </div>
@@ -709,10 +889,9 @@
 
           <div id="qbank-items-container" class="divide-y divide-slate-200"></div>
         </div>
-
       </section>
 
-      <!-- TAB 4: ARCHIVED / SAVED EXAM PAPERS -->
+      <!-- TAB 5: ARCHIVED / SAVED EXAM PAPERS -->
       <section id="tab-archive" class="tab-pane hidden max-w-7xl mx-auto space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -729,59 +908,7 @@
     </div>
   </main>
 
-  <!-- MODAL: FIREBASE PROTECTION & CLOUD DATABASE SETTINGS -->
-  <div id="modal-firebase" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div class="flex items-center space-x-2 text-amber-500">
-          <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-            <i data-lucide="shield" class="w-5 h-5 text-amber-600"></i>
-          </div>
-          <div>
-            <h3 class="font-extrabold text-base text-slate-900">Firebase Safe & Secure Protection</h3>
-            <p class="text-xs text-slate-500">Cloud database encryption & permanent question security</p>
-          </div>
-        </div>
-        <button onclick="closeModal('modal-firebase')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900">
-          <strong>Security Mode: </strong>
-          <span id="firebase-active-label" class="font-mono font-bold text-emerald-700">Offline Encrypted IndexedDB Active</span>
-          <p class="text-[11px] mt-1 text-slate-600">Your imported questions are saved permanently in browser storage. To enable multi-device live cloud sync with Google Firebase, paste your Firebase config below:</p>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Firebase Configuration (JSON / Object):</label>
-          <textarea id="firebase-config-input" rows="5" placeholder='{
-  "apiKey": "AIzaSy...",
-  "authDomain": "avabai-exam.firebaseapp.com",
-  "projectId": "avabai-exam",
-  "storageBucket": "avabai-exam.appspot.com",
-  "messagingSenderId": "...",
-  "appId": "..."
-}' class="w-full border rounded-lg p-2 font-mono text-[11px] border-slate-300"></textarea>
-        </div>
-
-        <div class="flex items-center justify-between text-[11px]">
-          <span class="text-slate-500">Need help creating a free Firebase project?</span>
-          <a href="https://console.firebase.google.com/" target="_blank" class="text-brand-700 hover:underline font-bold">Open Firebase Console →</a>
-        </div>
-      </div>
-
-      <div class="flex justify-end space-x-2 pt-3 border-t">
-        <button onclick="closeModal('modal-firebase')" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs">
-          Close
-        </button>
-        <button onclick="saveFirebaseConfig()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs shadow">
-          Connect & Protect
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: ADD CHAPTER DIRECTLY TO STANDARD & SUBJECT -->
+  <!-- MODAL: ADD CHAPTER TO SUBJECT -->
   <div id="modal-add-chapter" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b pb-3">
@@ -790,17 +917,22 @@
             <i data-lucide="folder-plus" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="font-extrabold text-base text-slate-900">Add Chapter to GSEB Subject</h3>
-            <p class="text-xs text-slate-500">Creates chapter entry in matrix & question bank</p>
+            <h3 class="font-extrabold text-base text-slate-900">Add Chapters to GSEB/GUJCET Subject</h3>
+            <p class="text-xs text-slate-500">Add multiple chapters continuously without closing</p>
           </div>
         </div>
-        <button onclick="closeModal('modal-add-chapter')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
+        <button type="button" onclick="closeModal('modal-add-chapter')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
+      </div>
+
+      <div id="chapter-add-success-alert" class="hidden p-2 rounded-lg bg-emerald-100 text-emerald-900 text-xs font-semibold flex items-center space-x-1.5">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-700"></i>
+        <span id="chapter-added-msg">Chapter saved successfully!</span>
       </div>
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Standard (Std):</label>
-          <select id="chapter-add-std" onchange="syncSubjectDropdown('chapter-add-std', 'chapter-add-sub')" class="w-full border rounded-lg p-2 border-slate-300 font-semibold">
+          <label class="block font-bold text-slate-700 mb-1">Standard / Category:</label>
+          <select id="chapter-add-std" onchange="syncSubjectDropdown('chapter-add-std', 'chapter-add-sub')" class="w-full border rounded-lg p-2 border-slate-300 font-semibold bg-white">
             <option value="Std 9">Std 9</option>
             <option value="Std 10" selected>Std 10</option>
             <option value="Std 11 Science">Std 11 Science</option>
@@ -809,64 +941,173 @@
             <option value="Std 12 Science">Std 12 Science</option>
             <option value="Std 12 Commerce">Std 12 Commerce</option>
             <option value="Std 12 Arts">Std 12 Arts</option>
+            <option value="GUJCET">GUJCET</option>
           </select>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">GSEB Subject:</label>
-          <select id="chapter-add-sub" class="w-full border rounded-lg p-2 border-slate-300 font-semibold"></select>
+          <label class="block font-bold text-slate-700 mb-1">Subject:</label>
+          <select id="chapter-add-sub" class="w-full border rounded-lg p-2 border-slate-300 font-semibold bg-white"></select>
         </div>
 
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Chapter No:</label>
-            <input type="text" id="chapter-add-no" placeholder="Ch 14" value="Ch 14" class="w-full border rounded-lg p-2 border-slate-300 font-mono font-bold">
+            <input type="text" id="chapter-add-no" placeholder="Ch 1" value="Ch 1" class="w-full border rounded-lg p-2 border-slate-300 font-mono font-bold bg-white">
           </div>
           <div class="col-span-2">
             <label class="block font-bold text-slate-700 mb-1">Chapter Name / Title:</label>
-            <input type="text" id="chapter-add-name" placeholder="e.g. Statistics / Probability" class="w-full border rounded-lg p-2 border-slate-300 font-medium">
+            <input type="text" id="chapter-add-name" placeholder="e.g. Differentiation / Integrals" class="w-full border rounded-lg p-2 border-slate-300 font-medium bg-white">
           </div>
         </div>
       </div>
 
-      <div class="flex justify-end space-x-2 pt-3 border-t">
-        <button onclick="closeModal('modal-add-chapter')" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs">
+      <div class="flex items-center justify-between pt-3 border-t">
+        <button type="button" onclick="closeModal('modal-add-chapter')" class="px-3 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs hover:bg-slate-300">
+          Done / Close
+        </button>
+        <div class="flex space-x-2">
+          <button type="button" onclick="saveNewChapter(true)" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow flex items-center space-x-1 cursor-pointer">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            <span>Save & Add Next Chapter</span>
+          </button>
+          <button type="button" onclick="saveNewChapter(false)" class="px-3 py-2 bg-brand-900 hover:bg-brand-800 text-white font-bold rounded-lg text-xs shadow cursor-pointer">
+            Save & Exit
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FIREBASE CONFIGURATION (RESTORED & FUNCTIONAL) -->
+  <div id="modal-firebase" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center space-x-2 text-amber-600">
+          <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base text-slate-900">Firebase Cloud Protection</h3>
+            <p class="text-xs text-slate-500" id="firebase-active-label">Safe Cloud Synchronization</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal('modal-firebase')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600">
+          Paste your Firebase web configuration JSON to enable cross-device cloud persistence for your Question Bank and blueprints.
+        </p>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Firebase Config Object (JSON):</label>
+          <textarea id="firebase-config-input" rows="8" placeholder='{&#10;  "apiKey": "AIzaSy...",&#10;  "authDomain": "school.firebaseapp.com",&#10;  "projectId": "school-valsad",&#10;  "storageBucket": "school-valsad.appspot.com",&#10;  "messagingSenderId": "...",&#10;  "appId": "..."&#10;}' class="w-full border rounded-lg p-2.5 font-mono text-[11px] border-slate-300 outline-none"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t">
+        <button type="button" onclick="closeModal('modal-firebase')" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs">
           Cancel
         </button>
-        <button onclick="saveNewChapter()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow">
-          Save Chapter
+        <button type="button" onclick="saveFirebaseConfig()" class="px-4 py-2 bg-brand-900 hover:bg-brand-800 text-white font-bold rounded-lg text-xs shadow flex items-center space-x-1">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span>Save & Connect Firebase</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: BULK IMPORT WITH COLUMN FOR ANSWER -->
+  <!-- MODAL: BULK IMPORT -->
   <div id="modal-bulk-import" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
     <div class="bg-white rounded-2xl max-w-4xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-      
       <div class="flex items-center justify-between border-b pb-3">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
             <i data-lucide="file-up" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="font-extrabold text-base text-slate-900">Bulk Import GSEB Questions</h3>
-            <p class="text-xs text-slate-500">Supports Standard, Subject, Chapter, Medium, Marks, QuestionText, Answer, Options</p>
+            <h3 class="font-extrabold text-base text-slate-900">Bulk Import Questions by Chapter</h3>
+            <p class="text-xs text-slate-500">Full MathJax LaTeX & Excel support ($...$, matrices, fractions). Options below text in 1 line, answer in adjacent column.</p>
           </div>
         </div>
         <button onclick="closeModal('modal-bulk-import')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
+      </div>
+
+      <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h4 class="font-bold text-xs uppercase text-brand-900 flex items-center space-x-1.5">
+            <i data-lucide="check-circle" class="w-4 h-4 text-brand-700"></i>
+            <span>Step 1: Choose Bank Destination & Target Chapter</span>
+          </h4>
+          <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300">
+            Auto-Fetches Existing Chapter Name
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 text-xs">
+          <div>
+            <label class="block font-bold text-brand-900 mb-1">Target Question Bank:</label>
+            <select id="bulk-target-bank-type" onchange="onBulkBankTypeChange()" class="w-full border-2 border-brand-700 rounded-lg p-2 font-bold bg-white text-brand-900 shadow-xs">
+              <option value="GENERAL">General Question Bank (GSEB)</option>
+              <option value="GUJCET">GUJCET Question Bank</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Standard / Category:</label>
+            <select id="bulk-target-std" onchange="syncSubjectDropdown('bulk-target-std', 'bulk-target-sub'); syncBulkChapterList();" class="w-full border rounded-lg p-2 font-semibold border-slate-300 bg-white">
+              <option value="Std 9">Std 9</option>
+              <option value="Std 10" selected>Std 10</option>
+              <option value="Std 11 Science">Std 11 Science</option>
+              <option value="Std 11 Commerce">Std 11 Commerce</option>
+              <option value="Std 11 Arts">Std 11 Arts</option>
+              <option value="Std 12 Science">Std 12 Science</option>
+              <option value="Std 12 Commerce">Std 12 Commerce</option>
+              <option value="Std 12 Arts">Std 12 Arts</option>
+              <option value="GUJCET">GUJCET</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Subject:</label>
+            <select id="bulk-target-sub" onchange="syncBulkChapterList();" class="w-full border rounded-lg p-2 font-semibold border-slate-300 bg-white"></select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Medium:</label>
+            <select id="bulk-target-med" class="w-full border rounded-lg p-2 border-slate-300 bg-white font-medium">
+              <option value="Gujarati">Gujarati</option>
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Chapter No:</label>
+            <select id="bulk-target-chap-no" onchange="autoFetchChapterNameForBulk()" class="w-full border rounded-lg p-2 border-slate-300 bg-white font-bold font-mono text-brand-900">
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1 text-xs">Directly Fetched Chapter Name:</label>
+          <div class="relative">
+            <input type="text" id="bulk-target-chap-name" placeholder="Chapter name will automatically fetch here..." class="w-full border-2 border-emerald-300 rounded-lg p-2 text-xs bg-emerald-50/50 font-bold text-slate-800">
+            <span class="absolute right-2.5 top-2 text-[10px] text-emerald-700 font-mono font-bold">AUTO-SYNCED</span>
+          </div>
+        </div>
       </div>
 
       <div class="bg-slate-50 rounded-xl border border-slate-300 p-4 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center space-x-2">
             <i data-lucide="table" class="w-4 h-4 text-brand-900"></i>
-            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-800">Required Table Format (Includes Answer Column):</h4>
+            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-800">Step 2: Excel / Table Format (Single-Line Inline Options Supported):</h4>
           </div>
           <div class="flex items-center space-x-2">
             <button onclick="downloadSampleCsv()" class="px-2.5 py-1 bg-brand-900 text-white hover:bg-brand-800 rounded text-xs font-bold flex items-center space-x-1 shadow">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
-              <span>Download CSV Template</span>
+              <span>Download Excel/CSV Template</span>
             </button>
             <button onclick="copySampleTableFormat()" class="px-2.5 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 rounded text-xs font-bold flex items-center space-x-1">
               <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -879,36 +1120,21 @@
           <table class="w-full text-[11px] text-left">
             <thead class="bg-brand-900 text-white font-bold">
               <tr>
-                <th class="p-2 border-r border-brand-800">Standard</th>
-                <th class="p-2 border-r border-brand-800">Subject</th>
-                <th class="p-2 border-r border-brand-800">Chapter</th>
-                <th class="p-2 border-r border-brand-800">Medium</th>
-                <th class="p-2 border-r border-brand-800 text-center w-12">Marks</th>
-                <th class="p-2 border-r border-brand-800">QuestionText</th>
-                <th class="p-2 border-r border-brand-800 bg-emerald-800 text-emerald-100">Answer / Solution</th>
-                <th class="p-2">Options</th>
+                <th class="p-2 border-r border-brand-800 text-center w-14">Marks</th>
+                <th class="p-2 border-r border-brand-800">Question Text &amp; MCQ Options (Options in single horizontal line)</th>
+                <th class="p-2 bg-emerald-800 text-emerald-100 text-center w-36">Answer / Solution</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-200 font-mono text-[10px]">
+            <tbody class="divide-y divide-slate-200 text-[10px]">
               <tr class="hover:bg-slate-50">
-                <td class="p-2 font-semibold text-brand-900">Std 10</td>
-                <td class="p-2">Mathematics (Standard - 12)</td>
-                <td class="p-2">Ch 1</td>
-                <td class="p-2">Gujarati</td>
-                <td class="p-2 text-center font-bold">1</td>
-                <td class="p-2 font-sans">ગુ.સા.અ. (12, 18) = ______ થાય.</td>
-                <td class="p-2 text-emerald-800 font-sans font-bold">(B) 6</td>
-                <td class="p-2">(A) 2 (B) 6 (C) 12 (D) 36</td>
-              </tr>
-              <tr class="hover:bg-slate-50 bg-slate-50/50">
-                <td class="p-2 font-semibold text-brand-900">Std 10</td>
-                <td class="p-2">Science & Tech</td>
-                <td class="p-2">Ch 1</td>
-                <td class="p-2">English</td>
-                <td class="p-2 text-center font-bold">2</td>
-                <td class="p-2 font-sans">What is a combination reaction? Give example.</td>
-                <td class="p-2 text-emerald-800 font-sans">When two or more substances combine: CaO + H2O -> Ca(OH)2</td>
-                <td class="p-2">-</td>
+                <td class="p-2.5 text-center font-bold text-brand-900 font-mono">1</td>
+                <td class="p-2.5">
+                  <p class="font-bold text-slate-900 text-[11px]">If $A = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$ then $|A| = ______$</p>
+                  <div class="mcq-options-inline text-slate-700 bg-slate-50 p-1 rounded mt-1 border border-slate-200 text-[11px]">
+                    <span class="mcq-option-col">(A) -2</span><span class="mcq-option-col">(B) 2</span><span class="mcq-option-col">(C) 10</span><span class="mcq-option-col">(D) -10</span>
+                  </div>
+                </td>
+                <td class="p-2.5 text-emerald-900 font-bold bg-emerald-50/50 text-center">(A) -2</td>
               </tr>
             </tbody>
           </table>
@@ -919,37 +1145,35 @@
         <div class="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-brand-600 transition bg-slate-50 flex flex-col items-center justify-center">
           <input type="file" id="bulk-file-input" accept=".csv, .tsv, .xlsx, .xls, .txt, .json" class="hidden" onchange="handleBulkFileSelect(event)">
           <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mb-2"></i>
-          <p class="font-bold text-slate-700 text-xs">Select Excel (.xlsx) / CSV file</p>
+          <p class="font-bold text-slate-700 text-xs">Upload Excel (.xlsx, .xls) / CSV file</p>
+          <span class="text-[10px] text-emerald-600 font-semibold mt-1">Direct SheetJS Engine: Preserves LaTeX without corruption</span>
           <button onclick="document.getElementById('bulk-file-input').click()" class="mt-3 px-3 py-1.5 bg-brand-900 text-white font-bold rounded-lg shadow hover:bg-brand-800 text-xs">
             Browse Device Files
           </button>
         </div>
 
         <div class="flex flex-col">
-          <label class="block font-bold text-slate-700 mb-1">Or Paste CSV / Table Data (Including Answer):</label>
-          <textarea id="bulk-paste-area" rows="6" placeholder="Standard,Subject,Chapter,Medium,Marks,QuestionText,Answer,Options&#10;Std 10,Mathematics (Standard - 12),Ch 1,Gujarati,1,ગુ.સા.અ. (12, 18) = ______ થાય.,(B) 6,(A) 2 (B) 6 (C) 12 (D) 36" class="flex-1 w-full border rounded-lg p-2 font-mono text-[11px] border-slate-300 outline-none"></textarea>
+          <label class="block font-bold text-slate-700 mb-1">Or Paste Questions (Marks, QuestionText, Options, Answer):</label>
+          <textarea id="bulk-paste-area" rows="6" placeholder="Marks,QuestionText,Options,Answer&#10;1,Evaluate $\lim_{x \to 0} \frac{\sin x}{x}$,(A) 0 (B) 1 (C) $\infty$ (D) -1,(B) 1" class="flex-1 w-full border rounded-lg p-2 font-mono text-[11px] border-slate-300 outline-none"></textarea>
         </div>
       </div>
 
       <div id="bulk-preview-zone" class="space-y-2">
         <div class="font-bold text-slate-800 text-xs flex justify-between items-center">
-          <span>Parsed Table Preview:</span>
+          <span>Parsed Table Preview (Options placed underneath question in single line):</span>
           <span id="bulk-parsed-count" class="text-brand-700 font-mono">0 questions detected</span>
         </div>
-        <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-lg text-[11px]">
+        <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-lg text-[11px] bg-white">
           <table class="w-full text-left" id="bulk-parsed-table">
-            <thead class="bg-slate-100 sticky top-0 font-bold border-b border-slate-200">
+            <thead class="bg-slate-100 sticky top-0 font-bold border-b border-slate-200 text-slate-700">
               <tr>
-                <th class="p-2">Std</th>
-                <th class="p-2">Subject</th>
-                <th class="p-2">Chap</th>
-                <th class="p-2 text-center">Marks</th>
-                <th class="p-2">Question Text</th>
-                <th class="p-2 text-emerald-800 font-bold">Answer / Solution</th>
+                <th class="p-2 text-center w-14">Marks</th>
+                <th class="p-2">Question Statement &amp; Options (Below)</th>
+                <th class="p-2 text-emerald-800 font-bold text-center w-36">Answer Key</th>
               </tr>
             </thead>
             <tbody id="bulk-parsed-body" class="divide-y divide-slate-100">
-              <tr><td colspan="6" class="p-3 text-center text-slate-400 italic">No data parsed yet. Click "Parse Table Data".</td></tr>
+              <tr><td colspan="3" class="p-3 text-center text-slate-400 italic">No data parsed yet. Click "Parse Table Data".</td></tr>
             </tbody>
           </table>
         </div>
@@ -960,14 +1184,13 @@
           Parse Table Data
         </button>
         <button onclick="commitBulkImport()" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 shadow">
-          Import Questions Permanently
+          Import Questions to Selected Bank
         </button>
       </div>
-
     </div>
   </div>
 
-  <!-- MODAL: BULK DELETE QUESTIONS BY CHAPTER -->
+  <!-- MODAL: BULK DELETE QUESTIONS -->
   <div id="modal-bulk-delete" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b pb-3">
@@ -985,7 +1208,7 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Standard (Std):</label>
+          <label class="block font-bold text-slate-700 mb-1">Standard / Category:</label>
           <select id="del-bulk-std" onchange="syncSubjectDropdown('del-bulk-std', 'del-bulk-sub'); updateBulkDeleteCount();" class="w-full border rounded-lg p-2 border-slate-300 font-semibold">
             <option value="ALL">All Standards</option>
             <option value="Std 9">Std 9</option>
@@ -996,11 +1219,12 @@
             <option value="Std 12 Science">Std 12 Science</option>
             <option value="Std 12 Commerce">Std 12 Commerce</option>
             <option value="Std 12 Arts">Std 12 Arts</option>
+            <option value="GUJCET">GUJCET</option>
           </select>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">GSEB Subject:</label>
+          <label class="block font-bold text-slate-700 mb-1">Subject:</label>
           <select id="del-bulk-sub" onchange="updateBulkDeleteCount()" class="w-full border rounded-lg p-2 border-slate-300 font-semibold"></select>
         </div>
 
@@ -1061,13 +1285,13 @@
         </div>
 
         <div>
-          <label class="block font-bold text-emerald-800 mb-1">Answer / Solution Key:</label>
-          <textarea id="edit-q-ans" rows="2" placeholder="Enter full answer or solution steps..." class="w-full border-2 border-emerald-300 rounded-lg p-2 text-emerald-950 bg-emerald-50/40 font-medium"></textarea>
+          <label class="block font-bold text-slate-700 mb-1">Options (For MCQs - single line preferred):</label>
+          <input type="text" id="edit-q-options" placeholder="(A) ... (B) ... (C) ... (D) ..." class="w-full border rounded-lg p-2 border-slate-300">
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Options (For MCQs - optional):</label>
-          <input type="text" id="edit-q-options" placeholder="(A) ... (B) ... (C) ... (D) ..." class="w-full border rounded-lg p-2 border-slate-300">
+          <label class="block font-bold text-emerald-800 mb-1">Answer / Solution Key:</label>
+          <textarea id="edit-q-ans" rows="2" placeholder="Enter full answer or solution steps..." class="w-full border-2 border-emerald-300 rounded-lg p-2 text-emerald-950 bg-emerald-50/40 font-medium"></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -1082,6 +1306,7 @@
               <option value="SECTION B">SECTION B</option>
               <option value="SECTION C">SECTION C</option>
               <option value="SECTION D">SECTION D</option>
+              <option value="GUJCET MCQ">GUJCET MCQ</option>
             </select>
           </div>
         </div>
@@ -1106,7 +1331,7 @@
           <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
             <i data-lucide="plus" class="w-5 h-5"></i>
           </div>
-          <h3 class="font-extrabold text-base text-slate-900">Add New GSEB Question</h3>
+          <h3 class="font-extrabold text-base text-slate-900">Add New Question (GSEB / GUJCET)</h3>
         </div>
         <button onclick="closeModal('modal-add-question')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
       </div>
@@ -1114,7 +1339,7 @@
       <div class="space-y-3 text-xs">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Standard:</label>
+            <label class="block font-bold text-slate-700 mb-1">Standard / Category:</label>
             <select id="add-q-std" onchange="syncSubjectDropdown('add-q-std', 'add-q-sub')" class="w-full border rounded-lg p-2 border-slate-300">
               <option value="Std 9">Std 9</option>
               <option value="Std 10" selected>Std 10</option>
@@ -1124,10 +1349,11 @@
               <option value="Std 12 Science">Std 12 Science</option>
               <option value="Std 12 Commerce">Std 12 Commerce</option>
               <option value="Std 12 Arts">Std 12 Arts</option>
+              <option value="GUJCET">GUJCET</option>
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">GSEB Subject:</label>
+            <label class="block font-bold text-slate-700 mb-1">Subject:</label>
             <select id="add-q-sub" class="w-full border rounded-lg p-2 border-slate-300"></select>
           </div>
         </div>
@@ -1153,17 +1379,17 @@
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">Question Statement:</label>
-          <textarea id="add-q-text" rows="3" placeholder="Enter question..." class="w-full border rounded-lg p-2 border-slate-300"></textarea>
+          <textarea id="add-q-text" rows="3" placeholder="Enter question (Cambria font / LaTeX)..." class="w-full border rounded-lg p-2 border-slate-300"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Options (For MCQ in one line):</label>
+          <input type="text" id="add-q-options" placeholder="(A) ... (B) ... (C) ... (D) ..." class="w-full border rounded-lg p-2 border-slate-300">
         </div>
 
         <div>
           <label class="block font-bold text-emerald-800 mb-1">Answer / Solution Key:</label>
           <textarea id="add-q-ans" rows="2" placeholder="Enter answer or solution..." class="w-full border-2 border-emerald-300 rounded-lg p-2 bg-emerald-50/50"></textarea>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Options (For MCQ):</label>
-          <input type="text" id="add-q-options" placeholder="(A) ... (B) ... (C) ... (D) ..." class="w-full border rounded-lg p-2 border-slate-300">
         </div>
       </div>
 
@@ -1269,7 +1495,40 @@
 
   <!-- JAVASCRIPT ENGINE -->
   <script>
-    /* 1. GSEB SUBJECT DIRECTORY */
+    /* MATHJAX RENDERING HELPER */
+    function renderMath(targetElement) {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        const targets = targetElement ? [targetElement] : undefined;
+        window.MathJax.typesetPromise(targets).catch((err) => console.warn('MathJax error:', err));
+      }
+    }
+
+    /* CHAPTER NUMBER EXTRACTOR */
+    function extractChapterNumber(str) {
+      if (!str) return '';
+      const match = String(str).match(/(?:ch|chapter)?\s*(\d+)/i);
+      return match ? match[1] : '';
+    }
+
+    /* STRICT SINGLE HORIZONTAL LINE MCQ FORMATTER */
+    function formatInlineOptionsHtml(optionsText) {
+      if (!optionsText || !optionsText.trim()) return '';
+      const clean = optionsText.trim();
+
+      const hasLabels = /\(A\)|\(B\)|\(C\)|\(D\)/i.test(clean);
+      if (hasLabels) {
+        const parts = clean.split(/(?=\([A-D]\))/i).map(s => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          return `<div class="mcq-options-inline text-slate-800 text-[11px] font-sans font-medium">` +
+            parts.map(p => `<span class="mcq-option-col">${p}</span>`).join('') +
+          `</div>`;
+        }
+      }
+
+      return `<div class="mcq-options-inline text-slate-800 text-[11px] font-sans font-medium"><span class="mcq-option-col">${clean}</span></div>`;
+    }
+
+    /* 1. GSEB & GUJCET SUBJECT DIRECTORY */
     const GSEB_SUBJECTS = {
       "Std 9": [
         "Mathematics",
@@ -1315,6 +1574,11 @@
         "Gujarati (FL/SL)",
         "Sanskrit",
         "Computer Science"
+      ],
+      "GUJCET": [
+        "Mathematics (GUJCET)",
+        "Physics (GUJCET)",
+        "Chemistry (GUJCET)"
       ],
       "Std 11 Commerce": [
         "Elements of Accounts (154)",
@@ -1362,31 +1626,33 @@
       ]
     };
 
-    /* 2. STORAGE & FIREBASE CONFIGURATION */
-    const APP_STORAGE_KEY_Q = "BAI_AVABAI_QUESTIONS_SAFE_V7";
-    const APP_STORAGE_KEY_PAPER = "BAI_AVABAI_LIVE_PAPER_SAFE_V7";
-    const APP_STORAGE_KEY_ARCHIVE = "BAI_AVABAI_ARCHIVES_SAFE_V7";
+    /* 2. STORAGE KEYS */
+    const APP_STORAGE_KEY_Q = "BAI_AVABAI_QUESTIONS_SAFE_V10";
+    const APP_STORAGE_KEY_PAPER = "BAI_AVABAI_LIVE_PAPER_SAFE_V10";
+    const APP_STORAGE_KEY_ARCHIVE = "BAI_AVABAI_ARCHIVES_SAFE_V10";
     const APP_STORAGE_KEY_PHOTO = "BAI_AVABAI_USER_PHOTO";
-    const APP_STORAGE_KEY_MATRIX = "BAI_AVABAI_MATRIX_SAFE_V7";
-    const APP_STORAGE_KEY_BLUEPRINTS = "BAI_AVABAI_SAVED_BLUEPRINTS_SAFE_V7";
+    const APP_STORAGE_KEY_MATRIX = "BAI_AVABAI_MATRIX_SAFE_V10";
+    const APP_STORAGE_KEY_BLUEPRINTS = "BAI_AVABAI_SAVED_BLUEPRINTS_SAFE_V10";
+    const APP_STORAGE_KEY_GUJCET_PAPER = "BAI_AVABAI_GUJCET_PAPER_V10";
     const APP_STORAGE_KEY_FIREBASE = "BAI_AVABAI_FIREBASE_CFG";
 
     const DEFAULT_BLUEPRINT_ROWS = [
-      { id: 'bp-1', name: 'Ch 1 - Real Numbers', m1: 2, m2: 1, m3: 1, m4: 0, c1: 0, c2: 0 },
-      { id: 'bp-2', name: 'Ch 2 - Polynomials', m1: 2, m2: 2, m3: 0, m4: 1, c1: 0, c2: 0 },
-      { id: 'bp-3', name: 'Ch 3 - Pair of Linear Equations', m1: 1, m2: 1, m3: 1, m4: 1, c1: 0, c2: 0 },
-      { id: 'bp-4', name: 'Ch 4 - Quadratic Equations', m1: 1, m2: 2, m3: 1, m4: 0, c1: 0, c2: 0 },
-      { id: 'bp-5', name: 'Ch 5 - Arithmetic Progressions', m1: 2, m2: 1, m3: 1, m4: 1, c1: 0, c2: 0 },
-      { id: 'bp-6', name: 'Ch 6 - Triangles', m1: 1, m2: 1, m3: 1, m4: 1, c1: 0, c2: 0 },
-      { id: 'bp-7', name: 'Ch 7 - Coordinate Geometry', m1: 1, m2: 1, m3: 1, m4: 0, c1: 0, c2: 0 }
+      { id: 'bp-1', std: 'Std 10', sub: 'Mathematics (Standard - 12)', name: 'Ch 1 - Real Numbers', m1: 2, m2: 1, m3: 1, m4: 0, c1: 0, c2: 0 },
+      { id: 'bp-2', std: 'Std 10', sub: 'Mathematics (Standard - 12)', name: 'Ch 2 - Polynomials', m1: 2, m2: 2, m3: 0, m4: 1, c1: 0, c2: 0 },
+      { id: 'bp-3', std: 'Std 10', sub: 'Mathematics (Standard - 12)', name: 'Ch 3 - Pair of Linear Equations', m1: 1, m2: 1, m3: 1, m4: 1, c1: 0, c2: 0 },
+      { id: 'bp-4', std: 'Std 10', sub: 'Mathematics (Standard - 12)', name: 'Ch 4 - Quadratic Equations', m1: 1, m2: 2, m3: 1, m4: 0, c1: 0, c2: 0 },
+      { id: 'bp-g1', std: 'GUJCET', sub: 'Mathematics (GUJCET)', name: 'Ch 1 - Relations and Functions', m1: 4, m2: 0, m3: 0, m4: 0, c1: 0, c2: 0 },
+      { id: 'bp-g2', std: 'GUJCET', sub: 'Mathematics (GUJCET)', name: 'Ch 2 - Inverse Trigonometric Functions', m1: 3, m2: 0, m3: 0, m4: 0, c1: 0, c2: 0 },
+      { id: 'bp-g3', std: 'GUJCET', sub: 'Mathematics (GUJCET)', name: 'Ch 3 - Matrices and Determinants', m1: 5, m2: 0, m3: 0, m4: 0, c1: 0, c2: 0 }
     ];
 
     const DEFAULT_QUESTIONS = [
       {
         id: 'q-1',
+        bankType: 'GENERAL',
         std: 'Std 10',
         subject: 'Mathematics (Standard - 12)',
-        chapter: 'Ch 1',
+        chapter: 'Ch 1 - Real Numbers',
         medium: 'Gujarati',
         section: 'SECTION A',
         marks: 1,
@@ -1395,52 +1661,69 @@
         options: '(A) 2   (B) 6   (C) 12   (D) 36'
       },
       {
-        id: 'q-2',
+        id: 'q-1b',
+        bankType: 'GENERAL',
         std: 'Std 10',
         subject: 'Mathematics (Standard - 12)',
-        chapter: 'Ch 1',
+        chapter: 'Ch 1 - Real Numbers',
+        medium: 'Gujarati',
+        section: 'SECTION A',
+        marks: 1,
+        text: 'જો $a = 18$ અને $b = 24$, તો ગુ.સા.અ. $(a, b) = ______$.',
+        answer: 'જવાબ: (C) 6',
+        options: '(A) 2   (B) 4   (C) 6   (D) 8'
+      },
+      {
+        id: 'q-2',
+        bankType: 'GENERAL',
+        std: 'Std 10',
+        subject: 'Mathematics (Standard - 12)',
+        chapter: 'Ch 1 - Real Numbers',
         medium: 'English',
         section: 'SECTION A',
         marks: 1,
-        text: 'If HCF(a, b) = 12 and a * b = 1800, then LCM(a, b) is ______.',
-        answer: 'Ans: (B) 150 [Formula: LCM = (a*b)/HCF = 1800/12 = 150]',
+        text: 'If $\\gcd(a, b) = 12$ and $a \\times b = 1800$, then $\\operatorname{lcm}(a, b)$ is ______.',
+        answer: 'Ans: (B) 150 [Formula: $\\text{LCM} = \\frac{a \\times b}{\\text{HCF}} = \\frac{1800}{12} = 150$]',
         options: '(A) 3600   (B) 150   (C) 900   (D) 600'
       },
       {
         id: 'q-3',
+        bankType: 'GENERAL',
         std: 'Std 10',
         subject: 'Mathematics (Standard - 12)',
-        chapter: 'Ch 2',
+        chapter: 'Ch 2 - Polynomials',
         medium: 'Gujarati',
         section: 'SECTION B',
         marks: 2,
-        text: 'દ્વિઘાત બહુપદી p(x) = x² - 2x - 8 ના શૂન્યો શોધો તથા શૂન્યો અને સહગુણકો વચ્ચેનો સંબંધ ચકાસો.',
-        answer: 'ઉકેલ: x² - 4x + 2x - 8 = 0 => શૂન્યો α = 4, β = -2. સરવાળો = 2, ગુણાકાર = -8.',
+        text: 'દ્વિઘાત બહુપદી $p(x) = x^2 - 2x - 8$ ના શૂન્યો શોધો તથા શૂન્યો અને સહગુણકો વચ્ચેનો સંબંધ ચકાસો.',
+        answer: 'ઉકેલ: શૂન્યો $\\alpha = 4, \\beta = -2$. સરવાળો = 2, ગુણાકાર = -8.',
         options: ''
       },
       {
-        id: 'q-4',
+        id: 'q-3b',
+        bankType: 'GENERAL',
         std: 'Std 10',
         subject: 'Mathematics (Standard - 12)',
-        chapter: 'Ch 3',
-        medium: 'English',
-        section: 'SECTION C',
-        marks: 3,
-        text: 'Solve the pair of linear equations: 2x + 3y = 11 and 2x - 4y = -24.',
-        answer: 'Solution: 7y = 35 => y = 5. Substituting gives x = -2.',
-        options: ''
-      },
-      {
-        id: 'q-5',
-        std: 'Std 10',
-        subject: 'Mathematics (Standard - 12)',
-        chapter: 'Ch 4',
+        chapter: 'Ch 2 - Polynomials',
         medium: 'Gujarati',
-        section: 'SECTION D',
-        marks: 4,
-        text: 'એક લંબચોરસ ખેતરના વિકર્ણનું માપ તેની નાની બાજુ કરતાં 60 મીટર વધુ છે. જો મોટી બાજુ નાની બાજુ કરતાં 30 મીટર વધુ હોય, તો ખેતરની બાજુઓનાં માપ શોધો.',
-        answer: 'ઉકેલ: નાની બાજુ = 90 મીટર, મોટી બાજુ = 120 મીટર (પાયથાગોરસ પ્રમેય દ્વારા).',
+        section: 'SECTION B',
+        marks: 2,
+        text: 'દ્વિઘાત બહુપદી $p(x) = 4s^2 - 4s + 1$ ના શૂન્યો શોધો.',
+        answer: 'ઉકેલ: શૂન્યો $s = 1/2, 1/2$.',
         options: ''
+      },
+      {
+        id: 'q-g1',
+        bankType: 'GUJCET',
+        std: 'GUJCET',
+        subject: 'Mathematics (GUJCET)',
+        chapter: 'Ch 3 - Matrices and Determinants',
+        medium: 'Gujarati',
+        section: 'GUJCET MCQ',
+        marks: 1,
+        text: 'જો $A$ એ $3 \\times 3$ કક્ષાનો ચોરસ શ્રેણિક હોય અને $|A| = 4$, તો $|\\operatorname{adj}(A)| = ______$.',
+        answer: 'જવાબ: (C) 16 [$|\\operatorname{adj}(A)| = |A|^{n-1} = 4^{3-1} = 16$]',
+        options: '(A) 4   (B) 64   (C) 16   (D) 8'
       }
     ];
 
@@ -1452,11 +1735,8 @@
         sub: 'Mathematics (Standard - 12)',
         totalMarks: 50,
         matrix: [
-          { id: 'bp-1', name: 'Ch 1 - Real Numbers', m1: 2, m2: 1, m3: 1, m4: 0, c1: 0, c2: 0 },
-          { id: 'bp-2', name: 'Ch 2 - Polynomials', m1: 2, m2: 2, m3: 0, m4: 1, c1: 0, c2: 0 },
-          { id: 'bp-3', name: 'Ch 3 - Linear Equations', m1: 1, m2: 1, m3: 1, m4: 1, c1: 0, c2: 0 },
-          { id: 'bp-4', name: 'Ch 4 - Quadratic Eq', m1: 1, m2: 2, m3: 1, m4: 0, c1: 0, c2: 0 },
-          { id: 'bp-5', name: 'Ch 5 - Arithmetic Prog', m1: 2, m2: 1, m3: 1, m4: 1, c1: 0, c2: 0 }
+          { id: 'bp-1', std: 'Std 10', sub: 'Mathematics (Standard - 12)', name: 'Ch 1 - Real Numbers', m1: 2, m2: 1, m3: 1, m4: 0, c1: 0, c2: 0 },
+          { id: 'bp-2', std: 'Std 10', sub: 'Mathematics (Standard - 12)', name: 'Ch 2 - Polynomials', m1: 2, m2: 2, m3: 0, m4: 1, c1: 0, c2: 0 }
         ]
       }
     ];
@@ -1465,12 +1745,17 @@
       questions: [],
       blueprintRows: [],
       livePaperQuestions: [],
+      gujcetPaperQuestions: [],
       archivedPapers: [],
       savedBlueprints: [],
+      currentBankType: 'GENERAL',
+      matrixMode: 'GSEB',
       authMode: 'signin',
       selectedQIds: new Set(),
       firebaseApp: null,
-      firestoreDb: null
+      firestoreDb: null,
+      lastUploadedRows: null,
+      parsedBulkItems: []
     };
 
     /* 3. INITIALIZATION & STORAGE LOAD */
@@ -1484,6 +1769,7 @@
       renderPreviousBlueprints();
       filterQuestionBank();
       renderLivePaper();
+      renderGujcetPaperList();
       renderArchiveList();
       applyStoredPhoto();
       updateBulkDeleteCount();
@@ -1493,12 +1779,18 @@
     function loadStorageData() {
       const storedQ = localStorage.getItem(APP_STORAGE_KEY_Q);
       state.questions = storedQ ? JSON.parse(storedQ) : DEFAULT_QUESTIONS;
+      state.questions.forEach(q => {
+        if (!q.bankType) q.bankType = (q.std === 'GUJCET' ? 'GUJCET' : 'GENERAL');
+      });
 
       const storedMatrix = localStorage.getItem(APP_STORAGE_KEY_MATRIX);
       state.blueprintRows = storedMatrix ? JSON.parse(storedMatrix) : DEFAULT_BLUEPRINT_ROWS;
 
       const storedPaper = localStorage.getItem(APP_STORAGE_KEY_PAPER);
-      state.livePaperQuestions = storedPaper ? JSON.parse(storedPaper) : [...state.questions];
+      state.livePaperQuestions = storedPaper ? JSON.parse(storedPaper) : [...state.questions.filter(q => q.bankType === 'GENERAL')];
+
+      const storedGujcet = localStorage.getItem(APP_STORAGE_KEY_GUJCET_PAPER);
+      state.gujcetPaperQuestions = storedGujcet ? JSON.parse(storedGujcet) : [...state.questions.filter(q => q.bankType === 'GUJCET')];
 
       const storedArchive = localStorage.getItem(APP_STORAGE_KEY_ARCHIVE);
       state.archivedPapers = storedArchive ? JSON.parse(storedArchive) : [];
@@ -1513,33 +1805,216 @@
       localStorage.setItem(APP_STORAGE_KEY_Q, JSON.stringify(state.questions));
       updateQuestionCountBadge();
       syncQuestionsToFirebase();
+      renderMatrixTable();
     }
 
     function updateQuestionCountBadge() {
       document.getElementById('badge-qbank-count').innerText = state.questions.length;
     }
 
-    /* 4. CROSS-DEVICE INSTALL APP & PWA MANIFEST (SIGMA ICON) */
+    /* 4. DUAL QUESTION BANK TOGGLE */
+    function switchBankType(type) {
+      state.currentBankType = type;
+      const genBtn = document.getElementById('bank-toggle-general');
+      const gujBtn = document.getElementById('bank-toggle-gujcet');
+      const filterStd = document.getElementById('filter-std');
+
+      if (type === 'GUJCET') {
+        gujBtn.className = "px-3 py-1 rounded bg-brand-900 text-white shadow-xs font-black";
+        genBtn.className = "px-3 py-1 rounded text-slate-700 hover:text-brand-900 font-bold";
+        filterStd.value = 'GUJCET';
+        syncSubjectDropdown('filter-std', 'filter-sub');
+      } else {
+        genBtn.className = "px-3 py-1 rounded bg-brand-900 text-white shadow-xs font-black";
+        gujBtn.className = "px-3 py-1 rounded text-slate-700 hover:text-brand-900 font-bold";
+        if (filterStd.value === 'GUJCET') filterStd.value = 'Std 10';
+        syncSubjectDropdown('filter-std', 'filter-sub');
+      }
+      filterQuestionBank();
+    }
+
+    /* 5. BLUEPRINT MATRIX MODE: GSEB VS GUJCET */
+    function setMatrixMode(mode) {
+      state.matrixMode = mode;
+      const gsebBtn = document.getElementById('matrix-mode-gseb');
+      const gujcetBtn = document.getElementById('matrix-mode-gujcet');
+      const filterStd = document.getElementById('matrix-filter-std');
+
+      if (mode === 'GUJCET') {
+        gujcetBtn.className = "px-3 py-1 rounded bg-brand-900 text-white shadow-xs font-black";
+        gsebBtn.className = "px-3 py-1 rounded text-slate-700 hover:text-brand-900 font-bold";
+        filterStd.value = 'GUJCET';
+        syncSubjectDropdown('matrix-filter-std', 'matrix-filter-sub');
+      } else {
+        gsebBtn.className = "px-3 py-1 rounded bg-brand-900 text-white shadow-xs font-black";
+        gujcetBtn.className = "px-3 py-1 rounded text-slate-700 hover:text-brand-900 font-bold";
+        if (filterStd.value === 'GUJCET') filterStd.value = 'Std 10';
+        syncSubjectDropdown('matrix-filter-std', 'matrix-filter-sub');
+      }
+      applyMatrixSelectorFilter();
+    }
+
+    /* 6. GUJCET 40-MARK BUILDER FUNCTIONS */
+    function renderGujcetPaperList() {
+      const container = document.getElementById('gujcet-paper-preview');
+      const countEl = document.getElementById('gujcet-current-count');
+      countEl.innerText = state.gujcetPaperQuestions.length;
+
+      if (state.gujcetPaperQuestions.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 text-center py-8">No MCQs added yet. Click <strong>"Auto-Generate 40 MCQs from Bank"</strong> or insert questions manually above.</p>`;
+        return;
+      }
+
+      let html = '<div class="space-y-3">';
+      state.gujcetPaperQuestions.forEach((q, idx) => {
+        html += `
+          <div class="p-3.5 bg-slate-50 border border-slate-300 rounded-lg flex items-start justify-between">
+            <div class="flex-1 pr-3">
+              <p class="font-bold text-slate-900 text-sm">
+                <span class="text-brand-900 mr-1.5 font-mono">Q${idx + 1}.</span>
+                <span>${q.text}</span>
+              </p>
+              ${q.options ? formatInlineOptionsHtml(q.options) : ''}
+              <p class="text-emerald-800 font-bold text-xs mt-2 pl-2">Ans: ${q.answer || 'Not provided'}</p>
+            </div>
+            <button onclick="removeGujcetQuestion(${idx})" class="text-rose-600 hover:text-rose-800 p-1 font-bold">×</button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+      lucide.createIcons();
+      renderMath(container);
+    }
+
+    function removeGujcetQuestion(index) {
+      state.gujcetPaperQuestions.splice(index, 1);
+      localStorage.setItem(APP_STORAGE_KEY_GUJCET_PAPER, JSON.stringify(state.gujcetPaperQuestions));
+      renderGujcetPaperList();
+    }
+
+    function addSingleGujcetMcq() {
+      const text = document.getElementById('gujcet-quick-text').value.trim();
+      const options = document.getElementById('gujcet-quick-options').value.trim();
+      const ans = document.getElementById('gujcet-quick-ans').value.trim();
+      const sub = document.getElementById('gujcet-subject').value;
+      const med = document.getElementById('gujcet-medium').value;
+
+      if (!text) {
+        alert('Please enter MCQ statement.');
+        return;
+      }
+
+      const newQ = {
+        id: 'g-mcq-' + Date.now(),
+        bankType: 'GUJCET',
+        std: 'GUJCET',
+        subject: `${sub} (GUJCET)`,
+        chapter: 'General GUJCET Topic',
+        medium: med,
+        section: 'GUJCET MCQ',
+        marks: 1,
+        text: text,
+        answer: ans,
+        options: options
+      };
+
+      state.gujcetPaperQuestions.push(newQ);
+      localStorage.setItem(APP_STORAGE_KEY_GUJCET_PAPER, JSON.stringify(state.gujcetPaperQuestions));
+
+      state.questions.unshift(newQ);
+      persistQuestions();
+
+      document.getElementById('gujcet-quick-text').value = '';
+      document.getElementById('gujcet-quick-options').value = '';
+      document.getElementById('gujcet-quick-ans').value = '';
+      renderGujcetPaperList();
+    }
+
+    function autoPopulateGujcet40Paper() {
+      const activeSub = document.getElementById('gujcet-subject').value;
+      const available = state.questions.filter(q => q.bankType === 'GUJCET' || q.std === 'GUJCET' || q.subject.includes(activeSub));
+      if (available.length === 0) {
+        alert(`No GUJCET questions found for ${activeSub}. Please add or bulk import questions into GUJCET Question Bank first.`);
+        return;
+      }
+
+      const selected = available.slice(0, 40);
+      state.gujcetPaperQuestions = [...selected];
+      localStorage.setItem(APP_STORAGE_KEY_GUJCET_PAPER, JSON.stringify(state.gujcetPaperQuestions));
+      renderGujcetPaperList();
+      alert(`Loaded ${selected.length} GUJCET ${activeSub} MCQs into your workspace!`);
+    }
+
+    /* 7. CROSS-DEVICE INSTALL APP & PWA MANIFEST */
     let deferredPrompt = null;
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+    function generateSigmaPngDataUri(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const r = size * 0.22;
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(size - r, 0);
+      ctx.quadraticCurveTo(size, 0, size, r);
+      ctx.lineTo(size, size - r);
+      ctx.quadraticCurveTo(size, size, size - r, size);
+      ctx.lineTo(r, size);
+      ctx.quadraticCurveTo(0, size, 0, size - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      const s = size / 512;
+      ctx.moveTo(370 * s, 140 * s);
+      ctx.lineTo(160 * s, 140 * s);
+      ctx.lineTo(265 * s, 256 * s);
+      ctx.lineTo(160 * s, 372 * s);
+      ctx.lineTo(370 * s, 372 * s);
+      ctx.lineTo(370 * s, 338 * s);
+      ctx.lineTo(225 * s, 338 * s);
+      ctx.lineTo(300 * s, 256 * s);
+      ctx.lineTo(225 * s, 174 * s);
+      ctx.lineTo(370 * s, 174 * s);
+      ctx.closePath();
+      ctx.fill();
+
+      return canvas.toDataURL('image/png');
+    }
+
     function initPwaManifest() {
-      const sigmaIconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%231e3a8a'/><path d='M370 140 H160 L265 256 L160 372 H370 V338 H225 L300 256 L225 174 H370 Z' fill='%23f59e0b'/></svg>";
-      const iconDataUri = "data:image/svg+xml;utf8," + encodeURIComponent(sigmaIconSvg);
+      const icon192 = generateSigmaPngDataUri(192);
+      const icon512 = generateSigmaPngDataUri(512);
+
+      document.getElementById('apple-touch-icon-link').setAttribute('href', icon512);
 
       const manifestData = {
         name: "BAI AVABAI HIGHSCHOOL, VALSAD",
         short_name: "Avabai Exam",
-        start_url: "./",
+        start_url: window.location.href.split('#')[0],
         display: "standalone",
         background_color: "#1e3a8a",
         theme_color: "#1e3a8a",
         orientation: "portrait-primary",
         icons: [
           {
-            src: iconDataUri,
-            sizes: "192x192 512x512",
-            type: "image/svg+xml",
+            src: icon192,
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any maskable"
+          },
+          {
+            src: icon512,
+            sizes: "512x512",
+            type: "image/png",
             purpose: "any maskable"
           }
         ]
@@ -1551,6 +2026,7 @@
     function initInlineServiceWorker() {
       if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
         const swBlob = new Blob([`
+          const CACHE = 'avabai-sigma-v10';
           self.addEventListener('install', e => self.skipWaiting());
           self.addEventListener('activate', e => e.waitUntil(clients.claim()));
           self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
@@ -1575,22 +2051,23 @@
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
-            alert("App installed successfully! The golden Sigma (Σ) icon is now on your device.");
+            alert("App installed successfully with the official Sigma (Σ) icon!");
           }
           deferredPrompt = null;
         });
       } else if (isIos) {
         alert("To install on iOS:\n1. Tap the Share button in Safari.\n2. Tap 'Add to Home Screen'.");
       } else {
-        alert("To install this app on your device:\nOpen this application via a local server (e.g. VS Code Live Server) or upload to a free web host like Netlify / GitHub Pages, then click 'Install App' or select 'Install' from your browser menu.");
+        alert("To install with the golden Sigma icon:\n\n1. Run this file via VS Code 'Live Server' or host it on free web hosting like GitHub Pages / Netlify.\n2. Look at the address bar or browser menu (⋮) and tap 'Install BAI AVABAI HIGHSCHOOL'!\n\nThis automatically places the standalone app on your desktop/screen with the golden Sigma icon.");
       }
     }
 
-    /* 5. FIREBASE PROTECTION & CLOUD DATABASE */
+    /* 8. FIREBASE PROTECTION MODAL RESTORED */
     function openFirebaseConfigModal() {
       const savedCfg = localStorage.getItem(APP_STORAGE_KEY_FIREBASE);
       if (savedCfg) {
-        document.getElementById('firebase-config-input').value = savedCfg;
+        const inputEl = document.getElementById('firebase-config-input');
+        if (inputEl) inputEl.value = savedCfg;
       }
       openModal('modal-firebase');
     }
@@ -1605,7 +2082,7 @@
             state.firestoreDb = firebase.firestore();
             document.getElementById('firebase-sync-badge').innerText = '● Firebase Protected';
             document.getElementById('firebase-sync-badge').classList.replace('text-emerald-300', 'text-amber-300');
-            document.getElementById('firebase-active-label').innerText = `Connected to Firebase (${config.projectId})`;
+            document.getElementById('firebase-active-label').innerText = `Connected (${config.projectId || 'Active'})`;
           }
         }
       } catch (err) {
@@ -1616,7 +2093,7 @@
     function saveFirebaseConfig() {
       const raw = document.getElementById('firebase-config-input').value.trim();
       if (!raw) {
-        alert('Please enter your Firebase Configuration object.');
+        alert('Please enter your Firebase Configuration JSON.');
         return;
       }
       try {
@@ -1626,7 +2103,7 @@
         alert('Firebase credentials configured successfully! Reloading to initialize secure cloud protection...');
         window.location.reload();
       } catch (e) {
-        alert('Invalid JSON format. Please ensure you paste valid Firebase configuration.');
+        alert('Invalid JSON format. Please paste a valid Firebase configuration object.');
       }
     }
 
@@ -1646,17 +2123,18 @@
       }
     }
 
-    /* 6. DATA BACKUP (EXPORT & IMPORT IN SIDEBAR) */
+    /* 9. DATA BACKUP */
     function exportFullDataBackup() {
       const backupData = {
         app: "BAI AVABAI HIGHSCHOOL, VALSAD",
         teacher: "KALPESH H TAILOR",
         designation: "M.Sc, B.Ed, GSET (MATHS)",
-        version: "7.0-SAFE",
+        version: "10.0-CAMBRIA-SWAP-SAFE",
         exportTimestamp: new Date().toISOString(),
         questions: state.questions,
         blueprintRows: state.blueprintRows,
         livePaperQuestions: state.livePaperQuestions,
+        gujcetPaperQuestions: state.gujcetPaperQuestions,
         savedBlueprints: state.savedBlueprints,
         archivedPapers: state.archivedPapers
       };
@@ -1669,7 +2147,7 @@
       downloadAnchor.click();
       downloadAnchor.remove();
 
-      alert('FULL DATA BACKUP EXPORTED SUCCESSFULLY!\n\nAll questions, blueprints, and papers are safely downloaded as a JSON backup file.');
+      alert('FULL DATA BACKUP EXPORTED SUCCESSFULLY!\n\nAll questions, GUJCET banks, blueprints, and papers are safely downloaded as a JSON backup file.');
     }
 
     function importFullDataBackup(event) {
@@ -1689,12 +2167,14 @@
             state.questions = imported.questions;
             if (imported.blueprintRows) state.blueprintRows = imported.blueprintRows;
             if (imported.livePaperQuestions) state.livePaperQuestions = imported.livePaperQuestions;
+            if (imported.gujcetPaperQuestions) state.gujcetPaperQuestions = imported.gujcetPaperQuestions;
             if (imported.savedBlueprints) state.savedBlueprints = imported.savedBlueprints;
             if (imported.archivedPapers) state.archivedPapers = imported.archivedPapers;
 
             persistQuestions();
             localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
             localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
+            localStorage.setItem(APP_STORAGE_KEY_GUJCET_PAPER, JSON.stringify(state.gujcetPaperQuestions));
             localStorage.setItem(APP_STORAGE_KEY_BLUEPRINTS, JSON.stringify(state.savedBlueprints));
             localStorage.setItem(APP_STORAGE_KEY_ARCHIVE, JSON.stringify(state.archivedPapers));
 
@@ -1702,9 +2182,10 @@
             renderPreviousBlueprints();
             filterQuestionBank();
             renderLivePaper();
+            renderGujcetPaperList();
             renderArchiveList();
 
-            alert('RESTORE SUCCESSFUL! Your Question Bank and Blueprint data are restored.');
+            alert('RESTORE SUCCESSFUL! Your Question Bank, GUJCET, and Blueprint data are restored.');
           }
         } catch (err) {
           alert('Error reading backup file. Please ensure it is a valid .json backup file.');
@@ -1714,13 +2195,15 @@
       event.target.value = '';
     }
 
-    /* 7. SUBJECT SYNC */
+    /* 10. SUBJECT SYNC */
     function initSubjectDropdowns() {
       syncSubjectDropdown('paper-std', 'paper-sub');
       syncSubjectDropdown('filter-std', 'filter-sub');
       syncSubjectDropdown('del-bulk-std', 'del-bulk-sub');
       syncSubjectDropdown('chapter-add-std', 'chapter-add-sub');
+      syncSubjectDropdown('bulk-target-std', 'bulk-target-sub');
       syncSubjectDropdown('add-q-std', 'add-q-sub');
+      syncSubjectDropdown('matrix-filter-std', 'matrix-filter-sub');
     }
 
     function syncSubjectDropdown(stdElementId, subElementId) {
@@ -1748,7 +2231,7 @@
       });
     }
 
-    /* 8. PRINT ENGINES */
+    /* 11. PRINT ENGINES WITH CAMBRIA FONT & DISTINCT PAGE BORDER */
     function printPaperWithAnswers() {
       const school = document.getElementById('paper-inst-name').value;
       const title = document.getElementById('paper-exam-title').value;
@@ -1759,14 +2242,14 @@
       const marks = document.getElementById('paper-marks').value;
 
       let sectionsHtml = '';
-      const sections = ['SECTION A', 'SECTION B', 'SECTION C', 'SECTION D'];
+      const sections = ['SECTION A', 'SECTION B', 'SECTION C', 'SECTION D', 'GUJCET MCQ'];
       let qNum = 1;
 
       sections.forEach(secName => {
         const secQuestions = state.livePaperQuestions.filter(q => (q.section || 'SECTION A') === secName);
         if (secQuestions.length === 0) return;
 
-        const secMarks = secQuestions.reduce((s, q) => s + (parseInt(q.marks) || 1), 0);
+        const secMarks = secQuestions.reduce((sum, q) => sum + (parseInt(q.marks) || 1), 0);
 
         sectionsHtml += `
           <div style="margin-top: 18px; border-bottom: 2px solid #000; padding-bottom: 4px; display: flex; justify-content: space-between; font-weight: bold; font-size: 13pt;">
@@ -1782,14 +2265,14 @@
               <table width="100%" style="border-collapse: collapse;">
                 <tr>
                   <td valign="top" style="width: 30px; font-weight: bold;">${qNum}.</td>
-                  <td valign="top" style="font-weight: 600;">${escapeHtml(q.text)}</td>
+                  <td valign="top" style="font-weight: 600;">${q.text}</td>
                   <td valign="top" align="right" style="width: 50px; font-weight: bold;">[${q.marks}]</td>
                 </tr>
               </table>
-              ${q.options ? `<div style="margin-left: 30px; font-family: monospace; font-size: 10pt; color: #333; margin-top: 3px;">${escapeHtml(q.options)}</div>` : ''}
+              ${q.options ? `<div style="margin-left: 30px; margin-top: 3px;">${formatInlineOptionsHtml(q.options)}</div>` : ''}
               
               <div style="margin-left: 30px; margin-top: 5px; padding: 6px 10px; background-color: #f0fdf4; border-left: 3px solid #16a34a; font-size: 10.5pt; color: #166534;">
-                <strong>Answer / Solution:</strong> ${escapeHtml(q.answer || 'Not provided')}
+                <strong>Answer / Solution:</strong> ${q.answer || 'Not provided'}
               </div>
             </div>
           `;
@@ -1800,7 +2283,7 @@
       });
 
       const printHtml = `
-        <div style="font-family: 'Times New Roman', serif; color: #000; line-height: 1.4;">
+        <div class="print-page-box" style="font-family: 'Cambria', 'Georgia', serif; color: #000; line-height: 1.4;">
           <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 12px;">
             <h1 style="margin: 0; font-size: 18pt; text-transform: uppercase;">${escapeHtml(school)}</h1>
             <h2 style="margin: 3px 0; font-size: 14pt;">${escapeHtml(title)} — <span style="color: #15803d;">TEACHER'S ANSWER KEY & SOLUTION</span></h2>
@@ -1827,13 +2310,16 @@
     function printBlueprintMatrix() {
       recalculateMatrix();
       const school = document.getElementById('paper-inst-name').value;
-      const std = document.getElementById('paper-std').value;
-      const sub = document.getElementById('paper-sub').value;
+      const std = document.getElementById('matrix-filter-std') ? document.getElementById('matrix-filter-std').value : document.getElementById('paper-std').value;
+      const sub = document.getElementById('matrix-filter-sub') ? document.getElementById('matrix-filter-sub').value : document.getElementById('paper-sub').value;
+      const med = document.getElementById('matrix-filter-med') ? document.getElementById('matrix-filter-med').value : document.getElementById('paper-medium').value;
       const w1 = document.getElementById('custom-weight-1').value;
       const w2 = document.getElementById('custom-weight-2').value;
 
+      const filteredRows = state.blueprintRows.filter(r => (!r.std || r.std === std) && (!r.sub || r.sub === sub));
+
       let rowsHtml = '';
-      state.blueprintRows.forEach((r, idx) => {
+      filteredRows.forEach((r, idx) => {
         const totalQ = (r.m1 || 0) + (r.m2 || 0) + (r.m3 || 0) + (r.m4 || 0) + (r.c1 || 0) + (r.c2 || 0);
         const totalMarks = (r.m1 * 1) + (r.m2 * 2) + (r.m3 * 3) + (r.m4 * 4) + (r.c1 * w1) + (r.c2 * w2);
         rowsHtml += `
@@ -1856,12 +2342,12 @@
       const totalMSummary = document.getElementById('foot-total-m').innerText;
 
       const printHtml = `
-        <div style="font-family: 'Times New Roman', serif; color: #000; line-height: 1.4;">
+        <div class="print-page-box" style="font-family: 'Cambria', 'Georgia', serif; color: #000; line-height: 1.4;">
           <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 14px;">
             <h1 style="margin: 0; font-size: 18pt; text-transform: uppercase;">${escapeHtml(school)}</h1>
-            <h2 style="margin: 4px 0; font-size: 14pt;">OFFICIAL CHAPTERWISE BLUEPRINT MATRIX</h2>
+            <h2 style="margin: 4px 0; font-size: 14pt;">OFFICIAL CHAPTERWISE BLUEPRINT MATRIX (${state.matrixMode})</h2>
             <div style="font-size: 11pt; font-weight: bold; margin-top: 6px;">
-              STANDARD: ${escapeHtml(std)} &nbsp;|&nbsp; SUBJECT: ${escapeHtml(sub)} &nbsp;|&nbsp; SESSION: 2026-27
+              CATEGORY/STD: ${escapeHtml(std)} &nbsp;|&nbsp; SUBJECT: ${escapeHtml(sub)} (${escapeHtml(med)}) &nbsp;|&nbsp; SESSION: 2026-27
             </div>
           </div>
 
@@ -1869,8 +2355,8 @@
             <thead>
               <tr style="background-color: #f1f5f9; text-align: center; font-weight: bold; border-bottom: 2px solid #000;">
                 <th style="padding: 8px; border: 1px solid #000; width: 40px;">#</th>
-                <th style="padding: 8px; border: 1px solid #000; text-align: left;">Chapter Name / Syllabus Topic</th>
-                <th style="padding: 8px; border: 1px solid #000; width: 55px;">1 Mark</th>
+                <th style="padding: 8px; border: 1px solid #000; text-align: left;">Chapter Name / Topic</th>
+                <th style="padding: 8px; border: 1px solid #000; width: 55px;">1 Mark (MCQ)</th>
                 <th style="padding: 8px; border: 1px solid #000; width: 55px;">2 Marks</th>
                 <th style="padding: 8px; border: 1px solid #000; width: 55px;">3 Marks</th>
                 <th style="padding: 8px; border: 1px solid #000; width: 55px;">4 Marks</th>
@@ -1909,58 +2395,186 @@
 
     function printStandardPaper() {
       const livePaperHtml = document.getElementById('printable-paper').innerHTML;
-      executePrint(livePaperHtml);
+      const borderedPaper = `<div class="print-page-box paper-cambria-font">${livePaperHtml}</div>`;
+      executePrint(borderedPaper);
     }
 
     function executePrint(contentHtml) {
       const printZone = document.getElementById('print-zone');
       printZone.innerHTML = contentHtml;
       printZone.classList.remove('hidden');
-      window.print();
-      printZone.classList.add('hidden');
-      printZone.innerHTML = '';
+
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([printZone]).then(() => {
+          window.print();
+          printZone.classList.add('hidden');
+          printZone.innerHTML = '';
+        }).catch(() => {
+          window.print();
+          printZone.classList.add('hidden');
+          printZone.innerHTML = '';
+        });
+      } else {
+        window.print();
+        printZone.classList.add('hidden');
+        printZone.innerHTML = '';
+      }
     }
 
-    /* 9. ADD CHAPTER TO SUBJECT */
+    /* 12. FIXED ADD CHAPTER TO SUBJECT */
     function openAddChapterModal() {
-      const curStd = document.getElementById('paper-std').value;
-      document.getElementById('chapter-add-std').value = curStd;
-      syncSubjectDropdown('chapter-add-std', 'chapter-add-sub');
+      let activeStd = 'Std 10';
+      const matrixStdEl = document.getElementById('matrix-filter-std');
+      const paperStdEl = document.getElementById('paper-std');
+      if (matrixStdEl && matrixStdEl.value) {
+        activeStd = matrixStdEl.value;
+      } else if (paperStdEl && paperStdEl.value) {
+        activeStd = paperStdEl.value;
+      }
+
+      let activeSub = '';
+      const matrixSubEl = document.getElementById('matrix-filter-sub');
+      const paperSubEl = document.getElementById('paper-sub');
+      if (matrixSubEl && matrixSubEl.value) {
+        activeSub = matrixSubEl.value;
+      } else if (paperSubEl && paperSubEl.value) {
+        activeSub = paperSubEl.value;
+      }
+
+      const stdSelect = document.getElementById('chapter-add-std');
+      if (stdSelect) {
+        stdSelect.value = activeStd;
+        syncSubjectDropdown('chapter-add-std', 'chapter-add-sub');
+        const subSelect = document.getElementById('chapter-add-sub');
+        if (subSelect && activeSub) {
+          subSelect.value = activeSub;
+        }
+      }
+
+      const existingChapters = state.blueprintRows.filter(r => (!r.std || r.std === activeStd) && (!r.sub || r.sub === activeSub));
+      const nextNum = existingChapters.length + 1;
+      const chapNoInput = document.getElementById('chapter-add-no');
+      const chapNameInput = document.getElementById('chapter-add-name');
+      if (chapNoInput) chapNoInput.value = `Ch ${nextNum}`;
+      if (chapNameInput) chapNameInput.value = '';
+
+      const alertBox = document.getElementById('chapter-add-success-alert');
+      if (alertBox) alertBox.classList.add('hidden');
+
       openModal('modal-add-chapter');
     }
 
-    function saveNewChapter() {
-      const stdVal = document.getElementById('chapter-add-std').value;
-      const subVal = document.getElementById('chapter-add-sub').value;
-      const chapNo = document.getElementById('chapter-add-no').value.trim();
-      const chapName = document.getElementById('chapter-add-name').value.trim();
+    function saveNewChapter(addAnother) {
+      const stdEl = document.getElementById('chapter-add-std');
+      const subEl = document.getElementById('chapter-add-sub');
+      const chapNoInput = document.getElementById('chapter-add-no');
+      const chapNameInput = document.getElementById('chapter-add-name');
+
+      if (!chapNoInput || !chapNameInput) {
+        alert('Chapter inputs were not found.');
+        return;
+      }
+
+      const stdVal = stdEl ? stdEl.value : 'Std 10';
+      const subVal = subEl ? subEl.value : 'Mathematics (Standard - 12)';
+      const chapNo = chapNoInput.value.trim();
+      const chapName = chapNameInput.value.trim();
 
       if (!chapNo || !chapName) {
-        alert('Please specify both Chapter No (e.g. Ch 14) and Chapter Title.');
+        alert('Please specify both Chapter No (e.g. Ch 1) and Chapter Title.');
         return;
       }
 
       const fullTitle = `${chapNo} - ${chapName}`;
 
       state.blueprintRows.push({
-        id: 'bp-' + Date.now(),
+        id: 'bp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+        std: stdVal,
+        sub: subVal,
         name: fullTitle,
-        m1: 1, m2: 1, m3: 1, m4: 0, c1: 0, c2: 0
+        m1: (stdVal === 'GUJCET' ? 2 : 1),
+        m2: 1,
+        m3: 1,
+        m4: 0,
+        c1: 0,
+        c2: 0
       });
       localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
 
       const chapDropdown = document.getElementById('filter-chap');
-      const opt = document.createElement('option');
-      opt.value = chapNo;
-      opt.innerText = `${chapNo} - ${chapName}`;
-      chapDropdown.appendChild(opt);
+      if (chapDropdown) {
+        const opt = document.createElement('option');
+        opt.value = chapNo;
+        opt.innerText = fullTitle;
+        chapDropdown.appendChild(opt);
+      }
 
-      closeModal('modal-add-chapter');
+      if (document.getElementById('matrix-filter-std')) {
+        document.getElementById('matrix-filter-std').value = stdVal;
+        syncSubjectDropdown('matrix-filter-std', 'matrix-filter-sub');
+        if (document.getElementById('matrix-filter-sub')) {
+          document.getElementById('matrix-filter-sub').value = subVal;
+        }
+      }
+
       renderMatrixTable();
-      alert(`Chapter "${fullTitle}" added to ${stdVal} - ${subVal}!`);
+
+      if (addAnother === true) {
+        const match = chapNo.match(/\d+/);
+        if (match) {
+          const nextNum = parseInt(match[0], 10) + 1;
+          chapNoInput.value = chapNo.replace(/\d+/, nextNum);
+        } else {
+          chapNoInput.value = `Ch ${state.blueprintRows.length + 1}`;
+        }
+        chapNameInput.value = '';
+        chapNameInput.focus();
+
+        const successAlert = document.getElementById('chapter-add-success-alert');
+        const successMsg = document.getElementById('chapter-added-msg');
+        if (successMsg) successMsg.innerText = `Saved: "${fullTitle}" for ${stdVal} - ${subVal}! Enter next chapter.`;
+        if (successAlert) successAlert.classList.remove('hidden');
+        lucide.createIcons();
+      } else {
+        closeModal('modal-add-chapter');
+        alert(`Chapter "${fullTitle}" added to ${stdVal} - ${subVal}!`);
+      }
     }
 
-    /* 10. MATRIX BLUEPRINT & PRESETS */
+    /* 13. MATRIX BLUEPRINT FILTERS & LIVE AVAILABILITY */
+    function applyMatrixSelectorFilter() {
+      renderMatrixTable();
+      const stdVal = document.getElementById('matrix-filter-std').value;
+      const subVal = document.getElementById('matrix-filter-sub').value;
+      const medVal = document.getElementById('matrix-filter-med').value;
+      
+      if (stdVal !== 'GUJCET') {
+        document.getElementById('paper-std').value = stdVal;
+        syncSubjectDropdown('paper-std', 'paper-sub');
+        document.getElementById('paper-sub').value = subVal;
+        document.getElementById('paper-medium').value = medVal;
+        renderLivePaper();
+      }
+      
+      document.getElementById('matrix-active-filter-badge').innerText = `${stdVal} - ${subVal} (${medVal})`;
+    }
+
+    function getAvailableCountForChapter(chapterNameOrNo, marksValue, std, sub) {
+      const cleanTarget = chapterNameOrNo.toLowerCase();
+      const targetNum = extractChapterNumber(chapterNameOrNo);
+
+      return state.questions.filter(q => {
+        const matchesStd = !std || q.std === std;
+        const matchesSub = !sub || q.subject === sub;
+        const qChap = (q.chapter || '').toLowerCase();
+        const qNum = extractChapterNumber(q.chapter);
+
+        const matchesChap = (targetNum && qNum && targetNum === qNum) || cleanTarget.includes(qChap) || qChap.includes(cleanTarget.split(' ')[0]);
+        const matchesMarks = parseInt(q.marks) === parseInt(marksValue);
+        return matchesStd && matchesSub && matchesChap && matchesMarks;
+      }).length;
+    }
+
     function renderMatrixTable() {
       const tbody = document.getElementById('matrix-body');
       const w1 = parseInt(document.getElementById('custom-weight-1').value) || 5;
@@ -1969,11 +2583,31 @@
       document.querySelectorAll('.custom-val-1').forEach(el => el.innerText = w1);
       document.querySelectorAll('.custom-val-2').forEach(el => el.innerText = w2);
 
+      const activeStd = document.getElementById('matrix-filter-std') ? document.getElementById('matrix-filter-std').value : (state.matrixMode === 'GUJCET' ? 'GUJCET' : 'Std 10');
+      const activeSub = document.getElementById('matrix-filter-sub') ? document.getElementById('matrix-filter-sub').value : (activeStd === 'GUJCET' ? 'Mathematics (GUJCET)' : 'Mathematics (Standard - 12)');
+      
+      if (document.getElementById('matrix-active-filter-badge')) {
+        document.getElementById('matrix-active-filter-badge').innerText = `${activeStd} - ${activeSub}`;
+      }
+
       tbody.innerHTML = '';
 
-      state.blueprintRows.forEach((row, idx) => {
+      const filteredRows = state.blueprintRows.filter(r => (!r.std || r.std === activeStd) && (!r.sub || r.sub === activeSub));
+
+      if (filteredRows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-slate-400 italic">No chapters added yet for <b>${activeStd} - ${activeSub}</b>. Click <b>"+ Add Chapter"</b> or <b>"Add Matrix Row"</b> above to add chapters for this subject.</td></tr>`;
+        recalculateMatrix();
+        return;
+      }
+
+      filteredRows.forEach((row, idx) => {
         const totalQ = (row.m1 || 0) + (row.m2 || 0) + (row.m3 || 0) + (row.m4 || 0) + (row.c1 || 0) + (row.c2 || 0);
         const totalMarks = (row.m1 * 1) + (row.m2 * 2) + (row.m3 * 3) + (row.m4 * 4) + (row.c1 * w1) + (row.c2 * w2);
+
+        const avail1 = getAvailableCountForChapter(row.name, 1, activeStd, activeSub);
+        const avail2 = getAvailableCountForChapter(row.name, 2, activeStd, activeSub);
+        const avail3 = getAvailableCountForChapter(row.name, 3, activeStd, activeSub);
+        const avail4 = getAvailableCountForChapter(row.name, 4, activeStd, activeSub);
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
@@ -1983,22 +2617,26 @@
             <input type="text" value="${escapeHtml(row.name)}" onchange="updateMatrixRow('${row.id}', 'name', this.value)" class="w-full font-semibold text-slate-800 bg-transparent border-b border-dashed border-slate-300 focus:border-brand-700 outline-none" />
           </td>
           <td class="p-2 text-center">
-            <input type="number" min="0" value="${row.m1}" onchange="updateMatrixRow('${row.id}', 'm1', this.value)" class="w-12 text-center border rounded p-1" />
+            <input type="number" min="0" value="${row.m1}" onchange="updateMatrixRow('${row.id}', 'm1', this.value)" class="w-12 text-center border rounded p-1 mx-auto block" />
+            <span class="inline-block mt-0.5 text-[9px] px-1 py-0.2 rounded font-mono font-bold ${avail1 >= row.m1 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">Avail: ${avail1}</span>
           </td>
           <td class="p-2 text-center">
-            <input type="number" min="0" value="${row.m2}" onchange="updateMatrixRow('${row.id}', 'm2', this.value)" class="w-12 text-center border rounded p-1" />
+            <input type="number" min="0" value="${row.m2}" onchange="updateMatrixRow('${row.id}', 'm2', this.value)" class="w-12 text-center border rounded p-1 mx-auto block" />
+            <span class="inline-block mt-0.5 text-[9px] px-1 py-0.2 rounded font-mono font-bold ${avail2 >= row.m2 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">Avail: ${avail2}</span>
           </td>
           <td class="p-2 text-center">
-            <input type="number" min="0" value="${row.m3}" onchange="updateMatrixRow('${row.id}', 'm3', this.value)" class="w-12 text-center border rounded p-1" />
+            <input type="number" min="0" value="${row.m3}" onchange="updateMatrixRow('${row.id}', 'm3', this.value)" class="w-12 text-center border rounded p-1 mx-auto block" />
+            <span class="inline-block mt-0.5 text-[9px] px-1 py-0.2 rounded font-mono font-bold ${avail3 >= row.m3 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">Avail: ${avail3}</span>
           </td>
           <td class="p-2 text-center">
-            <input type="number" min="0" value="${row.m4}" onchange="updateMatrixRow('${row.id}', 'm4', this.value)" class="w-12 text-center border rounded p-1" />
+            <input type="number" min="0" value="${row.m4}" onchange="updateMatrixRow('${row.id}', 'm4', this.value)" class="w-12 text-center border rounded p-1 mx-auto block" />
+            <span class="inline-block mt-0.5 text-[9px] px-1 py-0.2 rounded font-mono font-bold ${avail4 >= row.m4 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">Avail: ${avail4}</span>
           </td>
           <td class="p-2 text-center bg-amber-50/60 border-x border-amber-200">
-            <input type="number" min="0" value="${row.c1}" onchange="updateMatrixRow('${row.id}', 'c1', this.value)" class="w-12 text-center border rounded p-1 bg-white font-bold" />
+            <input type="number" min="0" value="${row.c1}" onchange="updateMatrixRow('${row.id}', 'c1', this.value)" class="w-12 text-center border rounded p-1 bg-white font-bold mx-auto block" />
           </td>
           <td class="p-2 text-center bg-amber-50/60 border-r border-amber-200">
-            <input type="number" min="0" value="${row.c2}" onchange="updateMatrixRow('${row.id}', 'c2', this.value)" class="w-12 text-center border rounded p-1 bg-white font-bold" />
+            <input type="number" min="0" value="${row.c2}" onchange="updateMatrixRow('${row.id}', 'c2', this.value)" class="w-12 text-center border rounded p-1 bg-white font-bold mx-auto block" />
           </td>
           <td class="p-2 text-center font-mono font-bold bg-blue-50/50 text-brand-900">${totalQ}</td>
           <td class="p-2 text-center font-mono font-extrabold bg-emerald-50/50 text-emerald-800">${totalMarks} M</td>
@@ -2026,11 +2664,21 @@
     }
 
     function addBlueprintRow() {
-      const count = state.blueprintRows.length + 1;
+      const activeStd = document.getElementById('matrix-filter-std') ? document.getElementById('matrix-filter-std').value : (state.matrixMode === 'GUJCET' ? 'GUJCET' : 'Std 10');
+      const activeSub = document.getElementById('matrix-filter-sub') ? document.getElementById('matrix-filter-sub').value : (activeStd === 'GUJCET' ? 'Mathematics (GUJCET)' : 'Mathematics (Standard - 12)');
+      const existingCount = state.blueprintRows.filter(r => r.std === activeStd && r.sub === activeSub).length + 1;
+
       state.blueprintRows.push({
         id: 'bp-' + Date.now(),
-        name: `Ch ${count} - New GSEB Chapter`,
-        m1: 1, m2: 1, m3: 0, m4: 0, c1: 0, c2: 0
+        std: activeStd,
+        sub: activeSub,
+        name: `Ch ${existingCount} - New Chapter`,
+        m1: (activeStd === 'GUJCET' ? 2 : 1),
+        m2: 0,
+        m3: 0,
+        m4: 0,
+        c1: 0,
+        c2: 0
       });
       localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
       renderMatrixTable();
@@ -2047,11 +2695,15 @@
     function recalculateMatrix() {
       const w1 = parseInt(document.getElementById('custom-weight-1').value) || 5;
       const w2 = parseInt(document.getElementById('custom-weight-2').value) || 6;
+      const activeStd = document.getElementById('matrix-filter-std') ? document.getElementById('matrix-filter-std').value : (state.matrixMode === 'GUJCET' ? 'GUJCET' : 'Std 10');
+      const activeSub = document.getElementById('matrix-filter-sub') ? document.getElementById('matrix-filter-sub').value : (activeStd === 'GUJCET' ? 'Mathematics (GUJCET)' : 'Mathematics (Standard - 12)');
 
       let sum1 = 0, sum2 = 0, sum3 = 0, sum4 = 0, sumC1 = 0, sumC2 = 0;
       let grandQ = 0, grandMarks = 0;
 
-      state.blueprintRows.forEach(r => {
+      const filteredRows = state.blueprintRows.filter(r => (!r.std || r.std === activeStd) && (!r.sub || r.sub === activeSub));
+
+      filteredRows.forEach(r => {
         sum1 += (r.m1 || 0);
         sum2 += (r.m2 || 0);
         sum3 += (r.m3 || 0);
@@ -2075,13 +2727,103 @@
       document.getElementById('foot-total-m').innerText = grandMarks + " M";
     }
 
+    function generateQuestionsFromBlueprint(rows, activeStd, activeSub, activeMed) {
+      const generated = [];
+      const usedIds = new Set();
+
+      rows.forEach(row => {
+        const markConfigs = [
+          { marks: 1, count: row.m1 || 0, section: 'SECTION A' },
+          { marks: 2, count: row.m2 || 0, section: 'SECTION B' },
+          { marks: 3, count: row.m3 || 0, section: 'SECTION C' },
+          { marks: 4, count: row.m4 || 0, section: 'SECTION D' }
+        ];
+
+        markConfigs.forEach(cfg => {
+          if (cfg.count <= 0) return;
+
+          const rowNum = extractChapterNumber(row.name);
+          const rowClean = (row.name || '').toLowerCase();
+
+          const matches = state.questions.filter(q => {
+            if (usedIds.has(q.id)) return false;
+            const matchesStd = !q.std || q.std === activeStd || activeStd === 'ALL';
+            const matchesSub = !q.subject || q.subject === activeSub;
+            const qChap = (q.chapter || '').toLowerCase();
+            const qNum = extractChapterNumber(q.chapter);
+
+            const matchesChap = (rowNum && qNum && rowNum === qNum) || rowClean.includes(qChap) || qChap.includes(rowClean.split(' ')[0]);
+            const matchesMarks = parseInt(q.marks) === cfg.marks;
+            return matchesStd && matchesSub && matchesChap && matchesMarks;
+          });
+
+          for (let i = 0; i < cfg.count; i++) {
+            if (i < matches.length) {
+              const q = matches[i];
+              usedIds.add(q.id);
+              generated.push({
+                id: q.id,
+                paperItemId: 'p-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                std: activeStd,
+                subject: activeSub,
+                chapter: row.name,
+                medium: activeMed,
+                section: cfg.section,
+                marks: cfg.marks,
+                text: q.text,
+                answer: q.answer,
+                options: q.options || ''
+              });
+            } else {
+              generated.push({
+                id: 'gen-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                paperItemId: 'p-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                std: activeStd,
+                subject: activeSub,
+                chapter: row.name,
+                medium: activeMed,
+                section: cfg.section,
+                marks: cfg.marks,
+                text: `[${row.name}] - Question statement for ${cfg.marks} mark(s) according to blueprint.`,
+                answer: `Solution key / answer steps for ${row.name}.`,
+                options: cfg.marks === 1 ? '(A) Option 1  (B) Option 2  (C) Option 3  (D) Option 4' : ''
+              });
+            }
+          }
+        });
+      });
+
+      return generated;
+    }
+
     function applyBlueprintToPaper() {
       recalculateMatrix();
       const totalMarks = document.getElementById('foot-total-m').innerText.replace(' M', '');
-      document.getElementById('paper-marks').value = totalMarks;
-      alert(`Applied Blueprint allocation matrix to paper generator!\nTotal Marks: ${totalMarks} Marks.`);
-      switchTab('tab-generator');
-      renderLivePaper();
+      const activeStd = document.getElementById('matrix-filter-std').value;
+      const activeSub = document.getElementById('matrix-filter-sub').value;
+      const activeMed = document.getElementById('matrix-filter-med').value;
+
+      if (activeStd === 'GUJCET') {
+        document.getElementById('gujcet-subject').value = activeSub.replace(' (GUJCET)', '');
+        document.getElementById('gujcet-medium').value = activeMed;
+        autoPopulateGujcet40Paper();
+        switchTab('tab-gujcet');
+      } else {
+        const rows = state.blueprintRows.filter(r => (!r.std || r.std === activeStd) && (!r.sub || r.sub === activeSub));
+
+        state.livePaperQuestions = generateQuestionsFromBlueprint(rows, activeStd, activeSub, activeMed);
+        localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
+
+        document.getElementById('paper-marks').value = totalMarks;
+        document.getElementById('paper-std').value = activeStd;
+        syncSubjectDropdown('paper-std', 'paper-sub');
+        document.getElementById('paper-sub').value = activeSub;
+        document.getElementById('paper-medium').value = activeMed;
+
+        renderLivePaper();
+        switchTab('tab-generator');
+        alert(`Examination paper successfully generated from Blueprint!\nPopulated ${state.livePaperQuestions.length} questions totaling ${totalMarks} Marks.`);
+      }
     }
 
     function renderPreviousBlueprints() {
@@ -2104,7 +2846,7 @@
           <div class="pt-2 border-t border-slate-200 flex items-center space-x-2">
             <button onclick="loadAndGenerateFromBlueprint('${bp.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow flex items-center justify-center space-x-1">
               <i data-lucide="play" class="w-3 h-3"></i>
-              <span>Directly Generate Paper</span>
+              <span>Directly Generate</span>
             </button>
             <button onclick="deleteBlueprintPreset('${bp.id}')" class="p-1.5 text-rose-600 hover:bg-rose-100 rounded" title="Delete Preset">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -2122,31 +2864,50 @@
 
       state.blueprintRows = JSON.parse(JSON.stringify(bp.matrix));
       localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
+
+      if (document.getElementById('matrix-filter-std')) {
+        document.getElementById('matrix-filter-std').value = bp.std;
+        syncSubjectDropdown('matrix-filter-std', 'matrix-filter-sub');
+        document.getElementById('matrix-filter-sub').value = bp.sub;
+      }
       renderMatrixTable();
 
-      document.getElementById('paper-std').value = bp.std;
-      syncSubjectDropdown('paper-std', 'paper-sub');
-      document.getElementById('paper-sub').value = bp.sub;
-      document.getElementById('paper-marks').value = bp.totalMarks;
+      if (bp.std === 'GUJCET') {
+        switchTab('tab-gujcet');
+      } else {
+        state.livePaperQuestions = generateQuestionsFromBlueprint(bp.matrix, bp.std, bp.sub, 'Gujarati');
+        localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
 
-      switchTab('tab-generator');
-      renderLivePaper();
+        document.getElementById('paper-std').value = bp.std;
+        syncSubjectDropdown('paper-std', 'paper-sub');
+        document.getElementById('paper-sub').value = bp.sub;
+        document.getElementById('paper-marks').value = bp.totalMarks;
+
+        renderLivePaper();
+        switchTab('tab-generator');
+        alert(`Loaded blueprint preset: "${bp.title}". Generated ${state.livePaperQuestions.length} questions into paper!`);
+      }
     }
 
     function saveCurrentBlueprintAsPreset() {
-      const title = prompt('Enter a title for this Blueprint Preset:', `${document.getElementById('paper-std').value} ${document.getElementById('paper-sub').value} Blueprint`);
+      const activeStd = document.getElementById('matrix-filter-std') ? document.getElementById('matrix-filter-std').value : document.getElementById('paper-std').value;
+      const activeSub = document.getElementById('matrix-filter-sub') ? document.getElementById('matrix-filter-sub').value : document.getElementById('paper-sub').value;
+
+      const title = prompt('Enter a title for this Blueprint Preset:', `${activeStd} ${activeSub} Blueprint`);
       if (!title) return;
 
       recalculateMatrix();
       const totalMarks = parseInt(document.getElementById('foot-total-m').innerText.replace(' M', '')) || 50;
 
+      const filtered = state.blueprintRows.filter(r => (!r.std || r.std === activeStd) && (!r.sub || r.sub === activeSub));
+
       const newPreset = {
         id: 'pb-' + Date.now(),
         title: title,
-        std: document.getElementById('paper-std').value,
-        sub: document.getElementById('paper-sub').value,
+        std: activeStd,
+        sub: activeSub,
         totalMarks: totalMarks,
-        matrix: JSON.parse(JSON.stringify(state.blueprintRows))
+        matrix: JSON.parse(JSON.stringify(filtered))
       };
 
       state.savedBlueprints.unshift(newPreset);
@@ -2163,7 +2924,7 @@
       }
     }
 
-    /* 11. QUESTION BANK */
+    /* 14. QUESTION BANK VISIBILITY & FILTERING */
     function filterQuestionBank() {
       const stdVal = document.getElementById('filter-std').value;
       const subVal = document.getElementById('filter-sub').value;
@@ -2172,12 +2933,19 @@
       const keyword = (document.getElementById('filter-keyword').value || '').toLowerCase();
 
       const filtered = state.questions.filter(q => {
+        const isGujcet = q.bankType === 'GUJCET' || q.std === 'GUJCET' || (q.subject && q.subject.includes('(GUJCET)'));
+        const matchesBank = state.currentBankType === 'GUJCET' ? isGujcet : !isGujcet;
+
         const matchesStd = (stdVal === 'ALL' || q.std === stdVal);
         const matchesSub = (subVal === 'ALL' || q.subject === subVal);
-        const matchesChap = (chapVal === 'ALL' || q.chapter.startsWith(chapVal.split(' ')[0]));
+        const matchesChap = (chapVal === 'ALL' || (q.chapter && q.chapter.toLowerCase().includes(chapVal.toLowerCase())));
         const matchesMed = (medVal === 'ALL' || q.medium === medVal);
-        const matchesKey = !keyword || q.text.toLowerCase().includes(keyword) || (q.answer && q.answer.toLowerCase().includes(keyword)) || (q.options && q.options.toLowerCase().includes(keyword));
-        return matchesStd && matchesSub && matchesChap && matchesMed && matchesKey;
+        const matchesKey = !keyword || 
+          (q.text && q.text.toLowerCase().includes(keyword)) || 
+          (q.answer && q.answer.toLowerCase().includes(keyword)) || 
+          (q.options && q.options.toLowerCase().includes(keyword));
+
+        return matchesBank && matchesStd && matchesSub && matchesChap && matchesMed && matchesKey;
       });
 
       renderQuestionBankList(filtered);
@@ -2186,11 +2954,11 @@
     function renderQuestionBankList(list) {
       const container = document.getElementById('qbank-items-container');
       const countIndicator = document.getElementById('qbank-count-indicator');
-      countIndicator.innerText = `Showing ${list.length} Questions (of ${state.questions.length} total stored permanently)`;
+      countIndicator.innerText = `Showing ${list.length} Questions (in ${state.currentBankType === 'GUJCET' ? 'GUJCET Bank' : 'General Question Bank'})`;
       container.innerHTML = '';
 
       if (list.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs">No questions matched the selected filters.</div>`;
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs">No questions matched the selected filters in ${state.currentBankType === 'GUJCET' ? 'GUJCET Bank' : 'General Question Bank'}.</div>`;
         return;
       }
 
@@ -2212,16 +2980,16 @@
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <p class="text-[10px] font-bold uppercase text-slate-400">Question Statement:</p>
-                  <p class="text-xs font-semibold text-slate-900">${escapeHtml(q.text)}</p>
-                  ${q.options ? `<p class="text-[11px] font-mono text-slate-600 bg-slate-100 p-1.5 rounded mt-1">${escapeHtml(q.options)}</p>` : ''}
+                  <p class="text-[10px] font-bold uppercase text-slate-400">Question Statement & Options:</p>
+                  <p class="text-xs font-semibold text-slate-900">${q.text}</p>
+                  ${q.options ? formatInlineOptionsHtml(q.options) : ''}
                 </div>
                 <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg">
                   <p class="text-[10px] font-bold uppercase text-emerald-800 flex items-center space-x-1">
                     <i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i>
                     <span>Answer / Solution Key:</span>
                   </p>
-                  <p class="text-xs text-emerald-950 font-medium mt-0.5 leading-relaxed">${escapeHtml(q.answer || 'No solution specified.')}</p>
+                  <p class="text-xs text-emerald-950 font-bold mt-0.5 leading-relaxed">${q.answer || 'No solution specified.'}</p>
                 </div>
               </div>
             </div>
@@ -2243,15 +3011,23 @@
         container.appendChild(div);
       });
       lucide.createIcons();
+      renderMath(container);
     }
 
     function insertBankQuestionToPaper(id) {
       const q = state.questions.find(item => item.id === id);
       if (q) {
-        state.livePaperQuestions.push({ ...q, paperItemId: 'p-' + Date.now() });
-        localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
-        renderLivePaper();
-        alert('Question added to live exam paper!');
+        if (q.bankType === 'GUJCET' || q.std === 'GUJCET') {
+          state.gujcetPaperQuestions.push({ ...q });
+          localStorage.setItem(APP_STORAGE_KEY_GUJCET_PAPER, JSON.stringify(state.gujcetPaperQuestions));
+          renderGujcetPaperList();
+          alert('MCQ added to GUJCET Workspace!');
+        } else {
+          state.livePaperQuestions.push({ ...q, paperItemId: 'p-' + Date.now() });
+          localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
+          renderLivePaper();
+          alert('Question added to live GSEB exam paper!');
+        }
       }
     }
 
@@ -2265,28 +3041,95 @@
       }
     }
 
-    /* 12. BULK IMPORT ENGINE */
+    /* 15. BULK IMPORT ENGINE */
+    function onBulkBankTypeChange() {
+      const bankType = document.getElementById('bulk-target-bank-type').value;
+      const stdSelect = document.getElementById('bulk-target-std');
+      if (bankType === 'GUJCET') {
+        stdSelect.value = 'GUJCET';
+      } else if (stdSelect.value === 'GUJCET') {
+        stdSelect.value = 'Std 10';
+      }
+      syncSubjectDropdown('bulk-target-std', 'bulk-target-sub');
+      syncBulkChapterList();
+    }
+
+    function syncBulkChapterList() {
+      const stdVal = document.getElementById('bulk-target-std').value;
+      const subVal = document.getElementById('bulk-target-sub').value;
+      const chapSelect = document.getElementById('bulk-target-chap-no');
+
+      chapSelect.innerHTML = '';
+
+      const matchingRows = state.blueprintRows.filter(r => (!r.std || r.std === stdVal) && (!r.sub || r.sub === subVal));
+
+      if (matchingRows.length > 0) {
+        matchingRows.forEach(r => {
+          const opt = document.createElement('option');
+          const chapNo = r.name.split(' - ')[0] || r.name;
+          opt.value = chapNo;
+          opt.innerText = r.name;
+          opt.dataset.chapName = r.name.includes(' - ') ? r.name.split(' - ').slice(1).join(' - ') : r.name;
+          chapSelect.appendChild(opt);
+        });
+      } else {
+        for (let i = 1; i <= 15; i++) {
+          const opt = document.createElement('option');
+          opt.value = `Ch ${i}`;
+          opt.innerText = `Ch ${i}`;
+          opt.dataset.chapName = `Chapter ${i}`;
+          chapSelect.appendChild(opt);
+        }
+      }
+
+      autoFetchChapterNameForBulk();
+    }
+
+    function autoFetchChapterNameForBulk() {
+      const chapSelect = document.getElementById('bulk-target-chap-no');
+      const nameInput = document.getElementById('bulk-target-chap-name');
+      const selectedOpt = chapSelect.options[chapSelect.selectedIndex];
+
+      if (selectedOpt && selectedOpt.dataset.chapName) {
+        nameInput.value = selectedOpt.dataset.chapName;
+      } else {
+        nameInput.value = 'General Topic';
+      }
+    }
+
     function openBulkImportModal() {
+      const curStd = document.getElementById('matrix-filter-std') ? document.getElementById('matrix-filter-std').value : document.getElementById('paper-std').value;
+      const curSub = document.getElementById('matrix-filter-sub') ? document.getElementById('matrix-filter-sub').value : document.getElementById('paper-sub').value;
+      const curMed = document.getElementById('matrix-filter-med') ? document.getElementById('matrix-filter-med').value : document.getElementById('paper-medium').value;
+
+      document.getElementById('bulk-target-bank-type').value = (state.currentBankType === 'GUJCET' ? 'GUJCET' : 'GENERAL');
+      document.getElementById('bulk-target-std').value = (state.currentBankType === 'GUJCET' ? 'GUJCET' : curStd);
+      syncSubjectDropdown('bulk-target-std', 'bulk-target-sub');
+      document.getElementById('bulk-target-sub').value = curSub;
+      document.getElementById('bulk-target-med').value = curMed;
+
+      syncBulkChapterList();
+      state.lastUploadedRows = null;
       openModal('modal-bulk-import');
     }
 
     function downloadSampleCsv() {
-      const sample = `Standard,Subject,Chapter,Medium,Marks,QuestionText,Answer,Options\nStd 10,Mathematics (Standard - 12),Ch 1,Gujarati,1,ગુ.સા.અ. (12, 18) = ______ થાય.,(B) 6,(A) 2 (B) 6 (C) 12 (D) 36\nStd 10,Science & Technology,Ch 1,English,2,What is a combination reaction? Give an example.,When two or more substances combine: CaO + H2O -> Ca(OH)2,\nStd 10,Social Science,Ch 1,Gujarati,3,ભારતનો પ્રાકૃતિક વારસો એટલે શું? તેનું મહત્ત્વ સમજાવો.,પ્રકૃતિ પર્યાવરણ અને માનવજીવન વચ્ચેના નિકટતમ સંબંધોનું પરિણામ એટલે પ્રાકૃતિક વારસો.,`;
+      const sample = `Marks,QuestionText,Options,Answer\n1,If $A = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}$ then $|A| = ______$,(A) -2  (B) 2  (C) 10  (D) -10,(A) -2\n1,Evaluate $\\lim_{x \\to 0} \\frac{\\sin x}{x}$,(A) 0  (B) 1  (C) $\\infty$  (D) -1,(B) 1\n2,Find roots of quadratic equation $x^2 - 2x - 8 = 0$,-,$x = 4$ and $x = -2$`;
 
       const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'Bai_Avabai_GSEB_Bulk_Import_Template.csv';
+      a.download = 'Bai_Avabai_Questions_Template.csv';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     }
 
     function copySampleTableFormat() {
-      const template = `Standard\tSubject\tChapter\tMedium\tMarks\tQuestionText\tAnswer\tOptions\nStd 10\tMathematics (Standard - 12)\tCh 1\tGujarati\t1\tગુ.સા.અ. (12, 18) = ______ થાય.\t(B) 6\t(A) 2 (B) 6 (C) 12 (D) 36`;
+      const template = `Marks\tQuestionText\tOptions\tAnswer\n1\tIf $A = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}$ then $|A| = ______$\t(A) -2  (B) 2  (C) 10  (D) -10\t(A) -2`;
       navigator.clipboard.writeText(template).then(() => {
-        alert('Table format with Answer column copied to clipboard!');
+        alert('Template format copied to clipboard!');
       });
     }
 
@@ -2297,69 +3140,179 @@
       const ext = file.name.split('.').pop().toLowerCase();
       const reader = new FileReader();
 
-      if (ext === 'csv' || ext === 'txt' || ext === 'tsv') {
+      if (ext === 'xlsx' || ext === 'xls') {
         reader.onload = function(e) {
-          document.getElementById('bulk-paste-area').value = e.target.result;
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', blankrows: false });
+            state.lastUploadedRows = rows;
+
+            const tsv = rows.map(r => r.map(c => String(c).replace(/[\t\r\n]+/g, ' ')).join('\t')).join('\n');
+            document.getElementById('bulk-paste-area').value = tsv;
+            parseRowsData(rows);
+          } catch (err) {
+            alert('Error parsing Excel file: ' + err.message);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.onload = function(e) {
+          const text = e.target.result;
+          document.getElementById('bulk-paste-area').value = text;
+          state.lastUploadedRows = null;
           parsePastedBulkQuestions();
         };
         reader.readAsText(file);
-      } else if (ext === 'xlsx' || ext === 'xls') {
-        reader.onload = function(e) {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const csv = XLSX.utils.sheet_to_csv(firstSheet);
-          document.getElementById('bulk-paste-area').value = csv;
-          parsePastedBulkQuestions();
-        };
-        reader.readAsArrayBuffer(file);
       }
     }
 
-    function parsePastedBulkQuestions() {
-      const raw = document.getElementById('bulk-paste-area').value.trim();
-      if (!raw) {
-        alert('Please paste table data or select a CSV/Excel file first.');
+    function parseCsvOrTsv(text) {
+      const lines = [];
+      let row = [];
+      let inQuotes = false;
+      let currentToken = '';
+
+      const hasTabs = text.split('\n').some(l => l.includes('\t'));
+      const delimiter = hasTabs ? '\t' : ',';
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"' || char === "'") {
+          if (inQuotes && nextChar === char) {
+            currentToken += char;
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === delimiter && !inQuotes) {
+          row.push(currentToken.trim());
+          currentToken = '';
+        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+          if (char === '\r' && nextChar === '\n') i++;
+          row.push(currentToken.trim());
+          if (row.some(c => c.length > 0)) {
+            lines.push(row);
+          }
+          row = [];
+          currentToken = '';
+        } else {
+          currentToken += char;
+        }
+      }
+      if (currentToken.length > 0 || row.length > 0) {
+        row.push(currentToken.trim());
+        if (row.some(c => c.length > 0)) lines.push(row);
+      }
+      return lines;
+    }
+
+    function parseRowsData(rows) {
+      const targetBank = document.getElementById('bulk-target-bank-type').value;
+      const targetStd = document.getElementById('bulk-target-std').value;
+      const targetSub = document.getElementById('bulk-target-sub').value;
+      const targetMed = document.getElementById('bulk-target-med').value;
+      const targetChapNo = document.getElementById('bulk-target-chap-no').value.trim() || 'Ch 1';
+      const targetChapName = document.getElementById('bulk-target-chap-name').value.trim() || 'General';
+
+      if (!rows || rows.length === 0) {
+        alert('No data rows found.');
         return;
       }
 
-      const lines = raw.split(/\r?\n/);
+      let headerRowIndex = -1;
+      let colMarks = -1, colQ = -1, colOpt = -1, colAns = -1;
+
+      for (let r = 0; r < Math.min(rows.length, 3); r++) {
+        const row = rows[r].map(c => String(c).toLowerCase().trim());
+        row.forEach((cell, idx) => {
+          if (cell.includes('mark')) colMarks = idx;
+          else if (cell.includes('question') || cell.includes('statement') || cell.includes('text') || cell.includes('prashna')) colQ = idx;
+          else if (cell.includes('opt') || cell.includes('choice') || cell.includes('vikalp')) colOpt = idx;
+          else if (cell.includes('ans') || cell.includes('sol') || cell.includes('key') || cell.includes('uttar') || cell.includes('javabb')) colAns = idx;
+        });
+        if (colQ !== -1 || colMarks !== -1) {
+          headerRowIndex = r;
+          break;
+        }
+      }
+
       const parsed = [];
+      const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 0;
 
-      lines.forEach((line, index) => {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.toLowerCase().startsWith('standard') || trimmed.toLowerCase().startsWith('std\t') || trimmed.toLowerCase().startsWith('std,')) return;
+      for (let r = startIndex; r < rows.length; r++) {
+        const parts = rows[r];
+        if (!parts || parts.length === 0 || !parts.some(c => String(c).trim().length > 0)) continue;
 
-        let parts = [];
-        if (trimmed.includes('\t')) {
-          parts = trimmed.split('\t');
+        let marks = 1, text = '', options = '', answer = '';
+
+        if (colQ !== -1 || colMarks !== -1) {
+          if (colMarks !== -1 && parts[colMarks] !== undefined) marks = parseInt(parts[colMarks]) || 1;
+          if (colQ !== -1 && parts[colQ] !== undefined) text = String(parts[colQ]).trim();
+          if (colOpt !== -1 && parts[colOpt] !== undefined) options = String(parts[colOpt]).trim();
+          if (colAns !== -1 && parts[colAns] !== undefined) answer = String(parts[colAns]).trim();
         } else {
-          parts = trimmed.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+          if (parts.length >= 4) {
+            marks = parseInt(parts[0]) || 1;
+            text = String(parts[1]).trim();
+            const p2 = String(parts[2]).trim();
+            const p3 = String(parts[3]).trim();
+            if (p2.includes('(A)') || p2.includes('(B)') || p2.includes('(1)')) {
+              options = p2;
+              answer = p3;
+            } else if (p3.includes('(A)') || p3.includes('(B)') || p3.includes('(1)')) {
+              answer = p2;
+              options = p3;
+            } else {
+              options = p2;
+              answer = p3;
+            }
+          } else if (parts.length === 3) {
+            marks = parseInt(parts[0]) || 1;
+            text = String(parts[1]).trim();
+            answer = String(parts[2]).trim();
+          } else if (parts.length >= 1) {
+            marks = parseInt(parts[0]) || 1;
+            text = parts[1] ? String(parts[1]).trim() : '';
+          }
         }
 
-        if (parts.length >= 6) {
+        if (text) {
           parsed.push({
-            id: 'imp-' + Date.now() + '-' + index,
-            std: cleanCsv(parts[0]) || 'Std 10',
-            subject: cleanCsv(parts[1]) || 'Mathematics (Standard - 12)',
-            chapter: cleanCsv(parts[2]) || 'Ch 1',
-            medium: cleanCsv(parts[3]) || 'Gujarati',
-            marks: parseInt(cleanCsv(parts[4])) || 1,
-            text: cleanCsv(parts[5]),
-            answer: parts[6] ? cleanCsv(parts[6]) : '',
-            options: parts[7] ? cleanCsv(parts[7]) : '',
-            section: (parseInt(cleanCsv(parts[4])) || 1) <= 1 ? 'SECTION A' : (parseInt(cleanCsv(parts[4])) === 2 ? 'SECTION B' : 'SECTION C')
+            id: 'imp-' + Date.now() + '-' + r,
+            bankType: targetBank,
+            std: targetStd,
+            subject: targetSub,
+            chapter: `${targetChapNo} - ${targetChapName}`,
+            medium: targetMed,
+            marks: marks,
+            text: text,
+            answer: answer,
+            options: options,
+            section: targetBank === 'GUJCET' ? 'GUJCET MCQ' : (marks <= 1 ? 'SECTION A' : (marks === 2 ? 'SECTION B' : 'SECTION C'))
           });
         }
-      });
+      }
 
       state.parsedBulkItems = parsed;
       renderBulkPreview(parsed);
     }
 
-    function cleanCsv(val) {
-      if (!val) return '';
-      return val.replace(/^["']|["']$/g, '').trim();
+    function parsePastedBulkQuestions() {
+      if (state.lastUploadedRows && state.lastUploadedRows.length > 0) {
+        parseRowsData(state.lastUploadedRows);
+        return;
+      }
+      const raw = document.getElementById('bulk-paste-area').value.trim();
+      if (!raw) {
+        alert('Please paste table data or select an Excel/CSV file.');
+        return;
+      }
+      const rows = parseCsvOrTsv(raw);
+      parseRowsData(rows);
     }
 
     function renderBulkPreview(items) {
@@ -2370,23 +3323,25 @@
       tbody.innerHTML = '';
 
       if (items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-rose-500 font-bold">Could not parse data. Ensure columns: Standard, Subject, Chapter, Medium, Marks, QuestionText, Answer, Options.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-rose-500 font-bold">Could not parse data. Ensure columns: Marks, QuestionText, Options, Answer.</td></tr>`;
         return;
       }
 
-      items.slice(0, 15).forEach(item => {
+      items.slice(0, 20).forEach(item => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 border-b border-slate-100";
         tr.innerHTML = `
-          <td class="p-2 font-semibold text-brand-900">${item.std}</td>
-          <td class="p-2">${item.subject}</td>
-          <td class="p-2 font-mono font-bold">${item.chapter}</td>
-          <td class="p-2 text-center font-bold text-emerald-800">${item.marks}</td>
-          <td class="p-2 max-w-xs truncate">${escapeHtml(item.text)}</td>
-          <td class="p-2 max-w-xs truncate text-emerald-800 font-medium">${escapeHtml(item.answer || '-')}</td>
+          <td class="p-2.5 text-center font-bold text-brand-900 font-mono align-top">${item.marks}</td>
+          <td class="p-2.5">
+            <p class="font-bold text-slate-900 text-xs">${item.text}</p>
+            ${item.options ? formatInlineOptionsHtml(item.options) : ''}
+          </td>
+          <td class="p-2.5 text-center font-bold text-emerald-900 bg-emerald-50/50 align-top">${item.answer || '-'}</td>
         `;
         tbody.appendChild(tr);
       });
+
+      renderMath(document.getElementById('bulk-parsed-table'));
     }
 
     function commitBulkImport() {
@@ -2398,16 +3353,19 @@
         return;
       }
 
+      const targetBankName = document.getElementById('bulk-target-bank-type').value === 'GUJCET' ? 'GUJCET Question Bank' : 'General Question Bank';
+      const chapDesc = `${document.getElementById('bulk-target-chap-no').value} - ${document.getElementById('bulk-target-chap-name').value}`;
+
       state.questions = [...state.parsedBulkItems, ...state.questions];
       persistQuestions();
 
-      alert(`Success! Imported ${state.parsedBulkItems.length} questions permanently into your Question Bank.`);
+      alert(`Success! Imported ${state.parsedBulkItems.length} questions into ${targetBankName} under "${chapDesc}".`);
       closeModal('modal-bulk-import');
       filterQuestionBank();
       switchTab('tab-qbank');
     }
 
-    /* 13. BULK DELETE BY CHAPTER & CHECKBOXES */
+    /* 16. BULK DELETE BY CHAPTER & CHECKBOXES */
     function openBulkDeleteModal() {
       updateBulkDeleteCount();
       openModal('modal-bulk-delete');
@@ -2421,7 +3379,7 @@
       const matched = state.questions.filter(q => {
         const matchStd = (stdVal === 'ALL' || q.std === stdVal);
         const matchSub = (subVal === 'ALL' || q.subject === subVal);
-        const matchChap = q.chapter.startsWith(chapVal);
+        const matchChap = q.chapter && q.chapter.startsWith(chapVal);
         return matchStd && matchSub && matchChap;
       });
 
@@ -2437,7 +3395,7 @@
       state.questions = state.questions.filter(q => {
         const matchStd = (stdVal === 'ALL' || q.std === stdVal);
         const matchSub = (subVal === 'ALL' || q.subject === subVal);
-        const matchChap = q.chapter.startsWith(chapVal);
+        const matchChap = q.chapter && q.chapter.startsWith(chapVal);
         return !(matchStd && matchSub && matchChap);
       });
 
@@ -2491,7 +3449,49 @@
       }
     }
 
-    /* 14. LIVE PAPER RENDERING & EDIT BUTTON SYSTEM */
+    /* SWAP BUTTON */
+    function swapQuestionInPaper(paperItemId) {
+      const currentIdx = state.livePaperQuestions.findIndex(q => (q.paperItemId || q.id) === paperItemId);
+      if (currentIdx === -1) return;
+
+      const currentQ = state.livePaperQuestions[currentIdx];
+      const targetChap = (currentQ.chapter || '').toLowerCase();
+      const targetNum = extractChapterNumber(currentQ.chapter);
+      const targetMarks = parseInt(currentQ.marks) || 1;
+
+      const candidates = state.questions.filter(q => {
+        if (q.id === currentQ.id) return false;
+        if (state.livePaperQuestions.some(pq => pq.id === q.id)) return false;
+
+        const qChap = (q.chapter || '').toLowerCase();
+        const qNum = extractChapterNumber(q.chapter);
+        const matchesChap = (targetNum && qNum && targetNum === qNum) || targetChap.includes(qChap) || qChap.includes(targetChap.split(' ')[0]);
+        const matchesMarks = (parseInt(q.marks) || 1) === targetMarks;
+
+        return matchesChap && matchesMarks;
+      });
+
+      if (candidates.length === 0) {
+        alert(`No alternative questions available in Question Bank for [${currentQ.chapter}] with ${targetMarks} mark(s) to swap.\nPlease add more questions to the Question Bank.`);
+        return;
+      }
+
+      const replacement = candidates[Math.floor(Math.random() * candidates.length)];
+      state.livePaperQuestions[currentIdx] = {
+        ...replacement,
+        paperItemId: 'p-swapped-' + Date.now(),
+        section: currentQ.section,
+        std: currentQ.std,
+        subject: currentQ.subject,
+        chapter: currentQ.chapter,
+        medium: currentQ.medium
+      };
+
+      localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
+      renderLivePaper();
+    }
+
+    /* 17. LIVE PAPER RENDERING WITH GUARANTEED SINGLE HORIZONTAL LINE FOR OPTIONS */
     function renderLivePaper() {
       const instName = document.getElementById('paper-inst-name').value;
       const examTitle = document.getElementById('paper-exam-title').value;
@@ -2515,7 +3515,7 @@
       const container = document.getElementById('paper-sections-container');
       container.innerHTML = '';
 
-      const sections = ['SECTION A', 'SECTION B', 'SECTION C', 'SECTION D'];
+      const sections = ['SECTION A', 'SECTION B', 'SECTION C', 'SECTION D', 'GUJCET MCQ'];
       let questionIndex = 1;
 
       sections.forEach(secName => {
@@ -2527,36 +3527,42 @@
         const secMarks = secQuestions.reduce((sum, q) => sum + (parseInt(q.marks) || 1), 0);
 
         secDiv.innerHTML = `
-          <div class="flex justify-between items-center border-b border-slate-800 pb-1 pt-2">
-            <h3 class="font-extrabold text-xs uppercase tracking-wider text-slate-900">${secName}</h3>
-            <span class="text-xs font-bold font-mono">[${secMarks} MARKS]</span>
+          <div class="flex justify-between items-center border-b-2 border-slate-900 pb-1 pt-2 font-bold">
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-slate-900">${secName}</h3>
+            <span class="text-xs font-mono">[${secMarks} MARKS]</span>
           </div>
-          <div class="space-y-3" id="sec-content-${secName.replace(' ', '')}"></div>
+          <div class="space-y-4" id="sec-content-${secName.replace(/\s+/g, '')}"></div>
         `;
 
         container.appendChild(secDiv);
-        const secContent = secDiv.querySelector(`#sec-content-${secName.replace(' ', '')}`);
+        const secContent = secDiv.querySelector(`#sec-content-${secName.replace(/\s+/g, '')}`);
 
         secQuestions.forEach(q => {
           const qId = q.paperItemId || q.id;
           const qItem = document.createElement('div');
-          qItem.className = "flex items-start justify-between group relative text-xs text-slate-900";
+          qItem.className = "flex items-start justify-between group relative text-xs text-slate-900 border-b border-dashed border-slate-200 pb-2.5";
+          
           qItem.innerHTML = `
             <div class="flex-1 pr-4">
-              <p class="leading-relaxed">
-                <span class="font-bold mr-1">${questionIndex}.</span>
-                <span>${escapeHtml(q.text)}</span>
+              <p class="leading-relaxed text-[13px]">
+                <span class="font-bold mr-1.5">${questionIndex}.</span>
+                <span>${q.text}</span>
               </p>
-              ${q.options ? `<p class="mt-1 font-mono text-[11px] text-slate-700 pl-4">${escapeHtml(q.options)}</p>` : ''}
+              ${q.options ? formatInlineOptionsHtml(q.options) : ''}
             </div>
-            <div class="flex items-center space-x-2">
-              <span class="font-mono font-bold text-slate-900">[${q.marks}]</span>
+            <div class="flex items-center space-x-1.5 shrink-0 pt-0.5">
+              <span class="font-mono font-bold text-slate-900 text-xs mr-1">[${q.marks}]</span>
               
-              <button onclick="openEditModal('${qId}', 'paper')" class="no-print opacity-0 group-hover:opacity-100 transition px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700" title="Edit Question">
+              <button onclick="swapQuestionInPaper('${qId}')" class="no-print px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-brand-950 rounded text-[10px] font-black shadow-xs flex items-center space-x-0.5 transition" title="Swap with another question from same chapter">
+                <i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i>
+                <span>SWAP</span>
+              </button>
+
+              <button onclick="openEditModal('${qId}', 'paper')" class="no-print px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold" title="Edit Question">
                 EDIT
               </button>
               
-              <button onclick="removeQuestionFromPaper('${qId}')" class="no-print opacity-0 group-hover:opacity-100 transition text-rose-600 hover:text-rose-800 p-0.5" title="Remove">
+              <button onclick="removeQuestionFromPaper('${qId}')" class="no-print text-rose-600 hover:text-rose-800 p-0.5 font-bold text-sm" title="Remove">
                 &times;
               </button>
             </div>
@@ -2565,10 +3571,14 @@
           questionIndex++;
         });
       });
+
+      lucide.createIcons();
+      renderMath(document.getElementById('printable-paper'));
     }
 
     function quickAddQuestionToPaper() {
       const text = document.getElementById('quick-q-text').value.trim();
+      const options = document.getElementById('quick-q-options').value.trim();
       const ans = document.getElementById('quick-q-ans').value.trim();
       const sec = document.getElementById('quick-section').value;
       const marks = parseInt(document.getElementById('quick-q-marks').value) || 1;
@@ -2581,18 +3591,20 @@
       state.livePaperQuestions.push({
         id: 'quick-' + Date.now(),
         paperItemId: 'quick-' + Date.now(),
+        bankType: 'GENERAL',
         std: document.getElementById('paper-std').value,
         subject: document.getElementById('paper-sub').value,
-        chapter: 'Ch 1',
+        chapter: 'Ch 1 - General',
         medium: document.getElementById('paper-medium').value,
         section: sec,
         marks: marks,
         text: text,
         answer: ans,
-        options: ''
+        options: options
       });
 
       document.getElementById('quick-q-text').value = '';
+      document.getElementById('quick-q-options').value = '';
       document.getElementById('quick-q-ans').value = '';
       localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
       renderLivePaper();
@@ -2618,8 +3630,8 @@
       if (!target) return;
 
       document.getElementById('edit-q-text').value = target.text || '';
-      document.getElementById('edit-q-ans').value = target.answer || '';
       document.getElementById('edit-q-options').value = target.options || '';
+      document.getElementById('edit-q-ans').value = target.answer || '';
       document.getElementById('edit-q-marks').value = target.marks || 1;
       document.getElementById('edit-q-section').value = target.section || 'SECTION A';
 
@@ -2631,8 +3643,8 @@
       const origin = document.getElementById('edit-q-origin').value;
 
       const newText = document.getElementById('edit-q-text').value.trim();
-      const newAns = document.getElementById('edit-q-ans').value.trim();
       const newOpts = document.getElementById('edit-q-options').value.trim();
+      const newAns = document.getElementById('edit-q-ans').value.trim();
       const newMarks = parseInt(document.getElementById('edit-q-marks').value) || 1;
       const newSec = document.getElementById('edit-q-section').value;
 
@@ -2645,8 +3657,8 @@
         const q = state.livePaperQuestions.find(item => (item.paperItemId || item.id) === id);
         if (q) {
           q.text = newText;
-          q.answer = newAns;
           q.options = newOpts;
+          q.answer = newAns;
           q.marks = newMarks;
           q.section = newSec;
           localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
@@ -2656,8 +3668,8 @@
         const q = state.questions.find(item => item.id === id);
         if (q) {
           q.text = newText;
-          q.answer = newAns;
           q.options = newOpts;
+          q.answer = newAns;
           q.marks = newMarks;
           q.section = newSec;
           persistQuestions();
@@ -2669,39 +3681,47 @@
     }
 
     function openAddQuestionModal() {
+      document.getElementById('add-q-std').value = (state.currentBankType === 'GUJCET' ? 'GUJCET' : 'Std 10');
+      syncSubjectDropdown('add-q-std', 'add-q-sub');
       openModal('modal-add-question');
     }
 
     function submitNewQuestion() {
       const text = document.getElementById('add-q-text').value.trim();
+      const options = document.getElementById('add-q-options').value.trim();
       const ans = document.getElementById('add-q-ans').value.trim();
+      const stdVal = document.getElementById('add-q-std').value;
+      const marksVal = parseInt(document.getElementById('add-q-marks').value) || 1;
+
       if (!text) {
         alert('Question statement is required.');
         return;
       }
+
       const newQ = {
         id: 'manual-' + Date.now(),
-        std: document.getElementById('add-q-std').value,
+        bankType: (stdVal === 'GUJCET' ? 'GUJCET' : 'GENERAL'),
+        std: stdVal,
         subject: document.getElementById('add-q-sub').value,
         chapter: document.getElementById('add-q-chap').value,
         medium: document.getElementById('add-q-med').value,
-        marks: parseInt(document.getElementById('add-q-marks').value) || 1,
+        marks: marksVal,
         text: text,
         answer: ans,
-        options: document.getElementById('add-q-options').value.trim(),
-        section: (parseInt(document.getElementById('add-q-marks').value) || 1) <= 1 ? 'SECTION A' : 'SECTION B'
+        options: options,
+        section: (stdVal === 'GUJCET' ? 'GUJCET MCQ' : (marksVal <= 1 ? 'SECTION A' : 'SECTION B'))
       };
 
       state.questions.unshift(newQ);
       persistQuestions();
       closeModal('modal-add-question');
       document.getElementById('add-q-text').value = '';
-      document.getElementById('add-q-ans').value = '';
       document.getElementById('add-q-options').value = '';
+      document.getElementById('add-q-ans').value = '';
       filterQuestionBank();
     }
 
-    /* 15. EXPORT TO WORD (.DOC) */
+    /* 18. EXPORT TO WORD (.DOC) */
     function exportToWordDoc() {
       const school = document.getElementById('paper-inst-name').value;
       const title = document.getElementById('paper-exam-title').value;
@@ -2713,7 +3733,7 @@
       const inst = document.getElementById('paper-instructions').value;
 
       let sectionsHtml = '';
-      const sections = ['SECTION A', 'SECTION B', 'SECTION C', 'SECTION D'];
+      const sections = ['SECTION A', 'SECTION B', 'SECTION C', 'SECTION D', 'GUJCET MCQ'];
       let qNum = 1;
 
       sections.forEach(sec => {
@@ -2736,10 +3756,10 @@
             <div style="margin-bottom: 10px; font-size: 11pt;">
               <table width="100%"><tr>
                 <td valign="top" width="30"><b>${qNum}.</b></td>
-                <td valign="top">${escapeHtml(q.text)}</td>
+                <td valign="top">${q.text}</td>
                 <td valign="top" align="right" width="50"><b>[${q.marks}]</b></td>
               </tr></table>
-              ${q.options ? `<div style="margin-left: 30px; font-family: monospace; font-size: 10pt; color: #333;">${escapeHtml(q.options)}</div>` : ''}
+              ${q.options ? `<div style="margin-left: 30px; margin-top: 3px; font-size: 10pt;">${q.options}</div>` : ''}
             </div>
           `;
           qNum++;
@@ -2754,34 +3774,37 @@
           <meta charset='utf-8'>
           <title>${title}</title>
           <style>
-            body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.3; }
+            body { font-family: 'Cambria', serif; font-size: 12pt; line-height: 1.3; }
+            .page-container { border: 2pt solid #000; padding: 20pt; }
             .header-table { width: 100%; border-bottom: 3px double #000; margin-bottom: 10px; padding-bottom: 5px; text-align: center; }
           </style>
         </head>
         <body>
-          <div class="header-table">
-            <h1 style="margin: 0; font-size: 18pt; text-transform: uppercase;">${school}</h1>
-            <h2 style="margin: 3px 0; font-size: 14pt;">${title}</h2>
-            <table width="100%" style="font-size: 11pt; font-weight: bold; margin-top: 6px;">
+          <div class="page-container">
+            <div class="header-table">
+              <h1 style="margin: 0; font-size: 18pt; text-transform: uppercase;">${school}</h1>
+              <h2 style="margin: 3px 0; font-size: 14pt;">${title}</h2>
+              <table width="100%" style="font-size: 11pt; font-weight: bold; margin-top: 6px;">
+                <tr>
+                  <td align="left">STD/EXAM: ${std}</td>
+                  <td align="center">SUBJECT: ${sub} (${med})</td>
+                  <td align="right">TIME: ${time} | MARKS: ${marks}</td>
+                </tr>
+              </table>
+            </div>
+            <p style="font-size: 10pt; font-style: italic; background: #f0f0f0; padding: 5px;">
+              <b>Instructions: </b> ${escapeHtml(inst)}
+            </p>
+            ${sectionsHtml}
+            <br><br><br>
+            <table width="100%" style="font-size: 11pt; font-weight: bold; text-align: center;">
               <tr>
-                <td align="left">STD: ${std}</td>
-                <td align="center">SUBJECT: ${sub} (${med})</td>
-                <td align="right">TIME: ${time} | MARKS: ${marks}</td>
+                <td>_______________________<br>Subject Teacher</td>
+                <td>KALPESH H TAILOR<br><span style="font-size: 9pt; font-weight: bold; color: #1e3a8a;">M.Sc, B.Ed, GSET (MATHS)</span></td>
+                <td>_______________________<br>Principal / Examiner</td>
               </tr>
             </table>
           </div>
-          <p style="font-size: 10pt; font-style: italic; background: #f0f0f0; padding: 5px;">
-            <b>Instructions: </b> ${escapeHtml(inst)}
-          </p>
-          ${sectionsHtml}
-          <br><br><br>
-          <table width="100%" style="font-size: 11pt; font-weight: bold; text-align: center;">
-            <tr>
-              <td>_______________________<br>Subject Teacher</td>
-              <td>KALPESH H TAILOR<br><span style="font-size: 9pt; font-weight: bold; color: #1e3a8a;">M.Sc, B.Ed, GSET (MATHS)</span></td>
-              <td>_______________________<br>Principal / Examiner</td>
-            </tr>
-          </table>
         </body>
         </html>
       `;
@@ -2796,7 +3819,7 @@
       document.body.removeChild(a);
     }
 
-    /* 16. ARCHIVE MANAGEMENT */
+    /* 19. ARCHIVE MANAGEMENT */
     function savePaperToArchive() {
       const school = document.getElementById('paper-inst-name').value;
       const title = document.getElementById('paper-exam-title').value;
@@ -2885,7 +3908,7 @@
       }
     }
 
-    /* 17. PROFILE PHOTO */
+    /* 20. PROFILE PHOTO */
     function openPhotoModal() {
       openModal('modal-photo');
     }
@@ -2919,7 +3942,7 @@
       if (saved) document.getElementById('user-avatar').src = saved;
     }
 
-    /* 18. NAVIGATION & UTILITIES */
+    /* 21. NAVIGATION & UTILITIES */
     function switchTab(tabId) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
       const target = document.getElementById(tabId);
@@ -2937,9 +3960,10 @@
       }
 
       const titles = {
-        'tab-generator': 'Question Paper Workspace',
+        'tab-generator': 'GSEB Question Paper Workspace',
+        'tab-gujcet': 'GUJCET 40-Mark Examination Workspace',
         'tab-blueprint': 'Chapterwise Allocation Matrix Blueprint',
-        'tab-qbank': 'Question Bank Management',
+        'tab-qbank': 'Question Bank Management (General & GUJCET)',
         'tab-archive': 'Saved Examination Papers Archive'
       };
       document.getElementById('active-tab-title').innerText = titles[tabId] || 'Workspace';
