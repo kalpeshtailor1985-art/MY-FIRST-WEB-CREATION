@@ -1496,10 +1496,10 @@
       }
     }
 
-    /* CHAPTER NUMBER EXTRACTOR */
+    /* CHAPTER NUMBER EXTRACTOR (Strict Integer Extraction) */
     function extractChapterNumber(str) {
       if (!str) return '';
-      const match = String(str).match(/(?:ch|chapter)?\s*(\d+)/i);
+      const match = String(str).match(/(?:ch|chapter|પ્રકરણ)?\s*(\d+)/i);
       return match ? match[1] : '';
     }
 
@@ -2132,7 +2132,6 @@
               }
               loadCloudFirestoreData();
             } else {
-              // If not logged in and not in cached session
               const cached = localStorage.getItem(APP_AUTH_CACHE_KEY);
               if (!cached) {
                 state.currentUser = null;
@@ -2797,7 +2796,7 @@
       }
     }
 
-    /* 13. MATRIX BLUEPRINT FILTERS & LIVE AVAILABILITY */
+    /* 13. ACCURATE MATRIX BLUEPRINT CHAPTER AVAILABILITY CHECKER */
     function applyMatrixSelectorFilter() {
       renderMatrixTable();
       const stdVal = document.getElementById('matrix-filter-std').value;
@@ -2815,19 +2814,39 @@
       document.getElementById('matrix-active-filter-badge').innerText = `${stdVal} - ${subVal} (${medVal})`;
     }
 
+    /* STRICT CHAPTER MATCHING: Ensures available counts match ONLY the specific chapter and mark */
     function getAvailableCountForChapter(chapterNameOrNo, marksValue, std, sub) {
-      const cleanTarget = chapterNameOrNo.toLowerCase();
+      if (!chapterNameOrNo) return 0;
+      
       const targetNum = extractChapterNumber(chapterNameOrNo);
+      const cleanTarget = String(chapterNameOrNo).toLowerCase().trim();
+      const targetPureTitle = cleanTarget.includes('-') ? cleanTarget.split('-').slice(1).join('-').trim() : cleanTarget;
 
       return state.questions.filter(q => {
-        const matchesStd = !std || q.std === std;
-        const matchesSub = !sub || q.subject === sub;
-        const qChap = (q.chapter || '').toLowerCase();
-        const qNum = extractChapterNumber(q.chapter);
+        // Standard check
+        if (std && std !== 'ALL' && q.std !== std) return false;
+        
+        // Subject check
+        if (sub && sub !== 'ALL' && q.subject !== sub) return false;
 
-        const matchesChap = (targetNum && qNum && targetNum === qNum) || cleanTarget.includes(qChap) || qChap.includes(cleanTarget.split(' ')[0]);
-        const matchesMarks = parseInt(q.marks) === parseInt(marksValue);
-        return matchesStd && matchesSub && matchesChap && matchesMarks;
+        // Marks check
+        if (parseInt(q.marks) !== parseInt(marksValue)) return false;
+
+        const qChapStr = String(q.chapter || '').toLowerCase().trim();
+        const qNum = extractChapterNumber(qChapStr);
+        const qPureTitle = qChapStr.includes('-') ? qChapStr.split('-').slice(1).join('-').trim() : qChapStr;
+
+        // 1. Strict numeric match (e.g. Ch 1 matches Ch 1)
+        if (targetNum && qNum) {
+          return targetNum === qNum;
+        }
+
+        // 2. Strict title match if no numeric match exists
+        if (targetPureTitle && qPureTitle && targetPureTitle.length > 2) {
+          return targetPureTitle === qPureTitle || targetPureTitle.includes(qPureTitle) || qPureTitle.includes(targetPureTitle);
+        }
+
+        return false;
       }).length;
     }
 
@@ -2860,6 +2879,7 @@
         const totalQ = (row.m1 || 0) + (row.m2 || 0) + (row.m3 || 0) + (row.m4 || 0) + (row.c1 || 0) + (row.c2 || 0);
         const totalMarks = (row.m1 * 1) + (row.m2 * 2) + (row.m3 * 3) + (row.m4 * 4) + (row.c1 * w1) + (row.c2 * w2);
 
+        // Strict chapter and marks availability
         const avail1 = getAvailableCountForChapter(row.name, 1, activeStd, activeSub);
         const avail2 = getAvailableCountForChapter(row.name, 2, activeStd, activeSub);
         const avail3 = getAvailableCountForChapter(row.name, 3, activeStd, activeSub);
@@ -3002,18 +3022,24 @@
           if (cfg.count <= 0) return;
 
           const rowNum = extractChapterNumber(row.name);
-          const rowClean = (row.name || '').toLowerCase();
+          const cleanRow = String(row.name || '').toLowerCase().trim();
+          const rowPureTitle = cleanRow.includes('-') ? cleanRow.split('-').slice(1).join('-').trim() : cleanRow;
 
           const matches = state.questions.filter(q => {
             if (usedIds.has(q.id)) return false;
-            const matchesStd = !q.std || q.std === activeStd || activeStd === 'ALL';
-            const matchesSub = !q.subject || q.subject === activeSub;
-            const qChap = (q.chapter || '').toLowerCase();
-            const qNum = extractChapterNumber(q.chapter);
+            if (activeStd && activeStd !== 'ALL' && q.std !== activeStd) return false;
+            if (activeSub && activeSub !== 'ALL' && q.subject !== activeSub) return false;
+            if (parseInt(q.marks) !== cfg.marks) return false;
 
-            const matchesChap = (rowNum && qNum && rowNum === qNum) || rowClean.includes(qChap) || qChap.includes(rowClean.split(' ')[0]);
-            const matchesMarks = parseInt(q.marks) === cfg.marks;
-            return matchesStd && matchesSub && matchesChap && matchesMarks;
+            const qChapStr = String(q.chapter || '').toLowerCase().trim();
+            const qNum = extractChapterNumber(qChapStr);
+            const qPureTitle = qChapStr.includes('-') ? qChapStr.split('-').slice(1).join('-').trim() : qChapStr;
+
+            if (rowNum && qNum) return rowNum === qNum;
+            if (rowPureTitle && qPureTitle && rowPureTitle.length > 2) {
+              return rowPureTitle === qPureTitle || rowPureTitle.includes(qPureTitle) || qPureTitle.includes(rowPureTitle);
+            }
+            return false;
           });
 
           for (let i = 0; i < cfg.count; i++) {
