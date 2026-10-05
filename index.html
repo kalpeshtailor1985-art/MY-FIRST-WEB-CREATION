@@ -150,7 +150,54 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col md:flex-row">
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col md:flex-row relative">
+
+  <!-- AUTHENTICATION OVERLAY GATE -->
+  <div id="auth-gate" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+        <div class="w-10 h-10 rounded-xl bg-brand-900 text-amber-300 font-serif font-black flex items-center justify-center text-xl shadow">
+          Σ
+        </div>
+        <div>
+          <h3 class="font-extrabold text-base text-slate-900" id="gate-title">Teacher Sign In</h3>
+          <p class="text-xs text-slate-500 font-semibold">BAI AVABAI HIGHSCHOOL, VALSAD</p>
+        </div>
+      </div>
+
+      <div id="gate-error" class="hidden p-2.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200"></div>
+
+      <form id="gate-auth-form" onsubmit="handleGateAuthSubmit(event)" class="space-y-3 text-xs">
+        <div id="gate-name-box" class="hidden">
+          <label class="block font-bold text-slate-700 mb-1">Full Name:</label>
+          <input type="text" id="gate-name" placeholder="Kalpesh H Tailor" class="w-full border rounded-lg p-2.5 border-slate-300">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Teacher Email Address:</label>
+          <input type="email" id="gate-email" required placeholder="teacher@baiavabai.edu.in" class="w-full border rounded-lg p-2.5 border-slate-300">
+        </div>
+
+        <div id="gate-pass-box">
+          <label class="block font-bold text-slate-700 mb-1">Password (min 6 characters):</label>
+          <input type="password" id="gate-password" placeholder="••••••••" class="w-full border rounded-lg p-2.5 border-slate-300">
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <button type="button" onclick="switchGateAuthMode('forgot')" id="gate-forgot-link" class="text-brand-700 hover:underline">
+            Forgot Password?
+          </button>
+          <button type="button" onclick="toggleGateAuthMode()" id="gate-toggle-btn" class="text-slate-600 hover:underline">
+            Need an account? Sign Up
+          </button>
+        </div>
+
+        <button type="submit" id="gate-submit-btn" class="w-full py-2.5 bg-brand-900 text-white font-bold rounded-lg shadow hover:bg-brand-800 transition">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- Mobile Top Navigation Header -->
   <header class="md:hidden bg-brand-900 text-white p-4 flex items-center justify-between shadow-md z-30">
@@ -196,11 +243,11 @@
           <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-brand-900 rounded-full"></span>
         </div>
         <div class="flex-1 min-w-0">
-          <h2 class="text-xs font-extrabold text-white tracking-wide truncate uppercase">KALPESH H TAILOR</h2>
+          <h2 id="logged-user-name" class="text-xs font-extrabold text-white tracking-wide truncate uppercase">KALPESH H TAILOR</h2>
           <p class="text-[11px] text-amber-300 font-black tracking-tight truncate">M.Sc, B.Ed, GSET (MATHS)</p>
           <div class="flex items-center space-x-2 mt-0.5">
-            <span id="firebase-sync-badge" class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-500/40">
-              ● Local Storage (100% Safe)
+            <span id="firebase-sync-badge" class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-mono bg-amber-950 text-amber-300 border border-amber-500/40">
+              ● Firebase Protected
             </span>
             <button onclick="openPhotoModal()" class="text-[10px] text-blue-200 hover:text-white flex items-center space-x-0.5">
               <i data-lucide="pencil" class="w-2.5 h-2.5"></i>
@@ -230,7 +277,7 @@
         <div class="flex items-center justify-between text-[11px] font-bold text-amber-300">
           <span class="flex items-center space-x-1">
             <i data-lucide="database-backup" class="w-3.5 h-3.5"></i>
-            <span>Offline Backup (Direct File)</span>
+            <span>Cloud & Local Backup</span>
           </span>
           <span class="text-[9px] text-emerald-400 font-mono">100% SAFE</span>
         </div>
@@ -291,9 +338,9 @@
 
       <div class="pt-1 border-t border-brand-800/80 my-1"></div>
 
-      <button onclick="openAuthModal('signin')" id="auth-status-btn" class="w-full flex items-center space-x-3 px-3.5 py-2 rounded-lg text-xs font-medium text-blue-200 hover:bg-brand-800 hover:text-white transition">
-        <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i>
-        <span id="auth-btn-label">Teacher Portal Login</span>
+      <button onclick="handleSignOutAction()" id="auth-status-btn" class="w-full flex items-center space-x-3 px-3.5 py-2 rounded-lg text-xs font-medium text-rose-300 hover:bg-brand-800 hover:text-white transition">
+        <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
+        <span id="auth-btn-label">Sign Out</span>
       </button>
     </nav>
 
@@ -314,9 +361,9 @@
         </span>
         <span class="text-xs text-slate-300">|</span>
         <span id="active-tab-title" class="text-xs font-semibold text-slate-600">Question Paper Workspace</span>
-        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200 hidden sm:inline-flex items-center space-x-1">
-          <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i>
-          <span>Data Protected</span>
+        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-semibold border border-amber-200 hidden sm:inline-flex items-center space-x-1">
+          <i data-lucide="shield-check" class="w-3 h-3 text-amber-600"></i>
+          <span>Firebase Cloud Protected</span>
         </span>
       </div>
 
@@ -991,11 +1038,11 @@
 
       <div class="space-y-3 text-xs">
         <p class="text-slate-600">
-          Paste your Firebase web configuration JSON to enable cross-device cloud persistence for your Question Bank and blueprints.
+          Your Firebase configuration is permanently embedded in source code and synchronizes across all devices.
         </p>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Firebase Config Object (JSON):</label>
-          <textarea id="firebase-config-input" rows="8" placeholder='{&#10;  "apiKey": "AIzaSy...",&#10;  "authDomain": "school.firebaseapp.com",&#10;  "projectId": "school-valsad",&#10;  "storageBucket": "school-valsad.appspot.com",&#10;  "messagingSenderId": "...",&#10;  "appId": "..."&#10;}' class="w-full border rounded-lg p-2.5 font-mono text-[11px] border-slate-300 outline-none"></textarea>
+          <textarea id="firebase-config-input" rows="8" class="w-full border rounded-lg p-2.5 font-mono text-[11px] border-slate-300 outline-none"></textarea>
         </div>
       </div>
 
@@ -1436,54 +1483,6 @@
     </div>
   </div>
 
-  <!-- MODAL: AUTHENTICATION SUITE -->
-  <div id="modal-auth" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div class="flex items-center space-x-2">
-          <div class="w-8 h-8 rounded-lg bg-blue-100 text-brand-900 font-serif font-black flex items-center justify-center">
-            Σ
-          </div>
-          <div>
-            <h3 class="font-extrabold text-base text-slate-900" id="auth-modal-title">Sign In</h3>
-            <p class="text-[11px] text-slate-500">BAI AVABAI HIGHSCHOOL, VALSAD</p>
-          </div>
-        </div>
-        <button onclick="closeModal('modal-auth')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
-      </div>
-
-      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-3 text-xs">
-        <div id="auth-name-container" class="hidden">
-          <label class="block font-bold text-slate-700 mb-1">Full Name:</label>
-          <input type="text" id="auth-name" placeholder="Kalpesh H Tailor" class="w-full border rounded-lg p-2 border-slate-300">
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Teacher Email:</label>
-          <input type="email" id="auth-email" required placeholder="kalpeshtailor@baiavabai.edu.in" class="w-full border rounded-lg p-2 border-slate-300">
-        </div>
-
-        <div id="auth-pass-container">
-          <label class="block font-bold text-slate-700 mb-1">Password:</label>
-          <input type="password" id="auth-password" placeholder="••••••••" class="w-full border rounded-lg p-2 border-slate-300">
-        </div>
-
-        <div class="flex items-center justify-between pt-1">
-          <button type="button" onclick="switchAuthMode('forgot')" id="auth-forgot-link" class="text-brand-700 hover:underline">
-            Forgot Password?
-          </button>
-          <button type="button" onclick="toggleAuthSignMode()" id="auth-toggle-btn" class="text-slate-600 hover:underline">
-            Need an account? Sign Up
-          </button>
-        </div>
-
-        <button type="submit" id="auth-submit-btn" class="w-full py-2.5 bg-brand-900 text-white font-bold rounded-lg shadow hover:bg-brand-800 transition">
-          Sign In
-        </button>
-      </form>
-    </div>
-  </div>
-
   <!-- DYNAMIC PRINT WRAPPER -->
   <div id="print-zone" class="hidden"></div>
 
@@ -1629,6 +1628,19 @@
     const APP_STORAGE_KEY_BLUEPRINTS = "BAI_AVABAI_SAVED_BLUEPRINTS_SAFE_V10";
     const APP_STORAGE_KEY_GUJCET_PAPER = "BAI_AVABAI_GUJCET_PAPER_V10";
     const APP_STORAGE_KEY_FIREBASE = "BAI_AVABAI_FIREBASE_CFG";
+    const APP_AUTH_CACHE_KEY = "BAI_AVABAI_CACHED_AUTH";
+
+    /* ========================================================
+       PERMANENT EMBEDDED FIREBASE CONFIGURATION
+       ======================================================== */
+    const HARDCODED_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAYMk4HFXyiWKIHwJhaxmglU5KruHzV3xI",
+      authDomain: "first-webapp---creation.firebaseapp.com",
+      projectId: "first-webapp---creation",
+      storageBucket: "first-webapp---creation.firebasestorage.app",
+      messagingSenderId: "1030334540569",
+      appId: "1:1030334540569:web:0ad1c05123470ed38af388"
+    };
 
     const DEFAULT_BLUEPRINT_ROWS = [
       { id: 'bp-1', std: 'Std 10', sub: 'Mathematics (Standard - 12)', name: 'Ch 1 - Real Numbers', m1: 2, m2: 1, m3: 1, m4: 0, c1: 0, c2: 0 },
@@ -1744,7 +1756,8 @@
       savedBlueprints: [],
       currentBankType: 'GENERAL',
       matrixMode: 'GSEB',
-      authMode: 'signin',
+      gateAuthMode: 'signin',
+      currentUser: null,
       selectedQIds: new Set(),
       firebaseApp: null,
       firestoreDb: null,
@@ -1754,6 +1767,7 @@
 
     /* 3. INITIALIZATION & STORAGE LOAD */
     window.addEventListener('DOMContentLoaded', () => {
+      checkCachedSession();
       loadStorageData();
       initFirebaseSafeService();
       initPwaManifest();
@@ -1769,6 +1783,22 @@
       updateBulkDeleteCount();
       lucide.createIcons();
     });
+
+    function checkCachedSession() {
+      const cached = localStorage.getItem(APP_AUTH_CACHE_KEY);
+      if (cached) {
+        try {
+          const user = JSON.parse(cached);
+          if (user && user.email) {
+            state.currentUser = user;
+            const gate = document.getElementById('auth-gate');
+            if (gate) gate.classList.add('hidden');
+            const nameEl = document.getElementById('logged-user-name');
+            if (nameEl && user.displayName) nameEl.innerText = user.displayName.toUpperCase();
+          }
+        } catch (e) {}
+      }
+    }
 
     function loadStorageData() {
       const storedQ = localStorage.getItem(APP_STORAGE_KEY_Q);
@@ -2056,22 +2086,12 @@
       }
     }
 
-    /* 8. FIREBASE PROTECTION MODAL RESTORED */
+    /* 8. FIREBASE INITIALIZATION & AUTHENTICATION GATE */
     function openFirebaseConfigModal() {
-      const savedCfg = localStorage.getItem(APP_STORAGE_KEY_FIREBASE);
       const inputEl = document.getElementById('firebase-config-input');
-      if (savedCfg && inputEl) {
-        inputEl.value = savedCfg;
-      } else if (inputEl && !inputEl.value) {
-        // Pre-fill clean template for the user
-        inputEl.value = JSON.stringify({
-          "apiKey": "",
-          "authDomain": "",
-          "projectId": "",
-          "storageBucket": "",
-          "messagingSenderId": "",
-          "appId": ""
-        }, null, 2);
+      const activeCfg = localStorage.getItem(APP_STORAGE_KEY_FIREBASE) ? JSON.parse(localStorage.getItem(APP_STORAGE_KEY_FIREBASE)) : HARDCODED_FIREBASE_CONFIG;
+      if (inputEl) {
+        inputEl.value = JSON.stringify(activeCfg, null, 2);
       }
       openModal('modal-firebase');
     }
@@ -2079,18 +2099,238 @@
     function initFirebaseSafeService() {
       try {
         const savedCfg = localStorage.getItem(APP_STORAGE_KEY_FIREBASE);
-        if (savedCfg) {
-          const config = JSON.parse(savedCfg);
-          if (config.apiKey && !firebase.apps.length) {
-            state.firebaseApp = firebase.initializeApp(config);
-            state.firestoreDb = firebase.firestore();
-            document.getElementById('firebase-sync-badge').innerText = '● Firebase Protected';
-            document.getElementById('firebase-sync-badge').classList.replace('text-emerald-300', 'text-amber-300');
-            document.getElementById('firebase-active-label').innerText = `Connected (${config.projectId || 'Active'})`;
+        const config = (savedCfg && JSON.parse(savedCfg).apiKey) ? JSON.parse(savedCfg) : HARDCODED_FIREBASE_CONFIG;
+
+        if (config && config.apiKey && !firebase.apps.length) {
+          state.firebaseApp = firebase.initializeApp(config);
+          state.firestoreDb = firebase.firestore();
+
+          // Set persistent local session
+          firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
+          // Set Protected UI indicators permanently
+          const syncBadge = document.getElementById('firebase-sync-badge');
+          if (syncBadge) {
+            syncBadge.innerText = '● Firebase Protected';
+            syncBadge.className = 'inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-mono bg-amber-950 text-amber-300 border border-amber-500/40';
           }
+          const activeLabel = document.getElementById('firebase-active-label');
+          if (activeLabel) {
+            activeLabel.innerText = `Connected (${config.projectId || 'Cloud Protected'})`;
+          }
+
+          // AUTH GATE LISTENER: Checks if user is already authenticated
+          firebase.auth().onAuthStateChanged((user) => {
+            const gate = document.getElementById('auth-gate');
+            if (user) {
+              state.currentUser = user;
+              localStorage.setItem(APP_AUTH_CACHE_KEY, JSON.stringify({ email: user.email, displayName: user.displayName }));
+              if (gate) gate.classList.add('hidden');
+              if (user.displayName) {
+                const nameEl = document.getElementById('logged-user-name');
+                if (nameEl) nameEl.innerText = user.displayName.toUpperCase();
+              }
+              loadCloudFirestoreData();
+            } else {
+              // If not logged in and not in cached session
+              const cached = localStorage.getItem(APP_AUTH_CACHE_KEY);
+              if (!cached) {
+                state.currentUser = null;
+                if (gate) gate.classList.remove('hidden');
+              }
+            }
+          });
         }
       } catch (err) {
-        console.warn('Firebase offline mode active:', err);
+        console.warn('Firebase initialization note:', err);
+      }
+    }
+
+    function loadCloudFirestoreData() {
+      if (!state.firestoreDb) return;
+      state.firestoreDb.collection("bai_avabai_security").doc("master_store").get().then((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          let updated = false;
+
+          if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+            state.questions = data.questions;
+            localStorage.setItem(APP_STORAGE_KEY_Q, JSON.stringify(state.questions));
+            updated = true;
+          }
+          if (data.blueprintRows && Array.isArray(data.blueprintRows) && data.blueprintRows.length > 0) {
+            state.blueprintRows = data.blueprintRows;
+            localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
+            updated = true;
+          }
+          if (data.savedBlueprints && Array.isArray(data.savedBlueprints) && data.savedBlueprints.length > 0) {
+            state.savedBlueprints = data.savedBlueprints;
+            localStorage.setItem(APP_STORAGE_KEY_BLUEPRINTS, JSON.stringify(state.savedBlueprints));
+            updated = true;
+          }
+          if (data.archivedPapers && Array.isArray(data.archivedPapers) && data.archivedPapers.length > 0) {
+            state.archivedPapers = data.archivedPapers;
+            localStorage.setItem(APP_STORAGE_KEY_ARCHIVE, JSON.stringify(state.archivedPapers));
+            updated = true;
+          }
+
+          if (updated) {
+            updateQuestionCountBadge();
+            renderMatrixTable();
+            renderPreviousBlueprints();
+            filterQuestionBank();
+            renderArchiveList();
+          }
+        } else {
+          syncQuestionsToFirebase();
+        }
+      }).catch(err => {
+        console.warn("Firebase remote fetch fallback to offline cache:", err);
+      });
+    }
+
+    /* AUTH GATE FORM HANDLERS */
+    function switchGateAuthMode(mode) {
+      state.gateAuthMode = mode;
+      const title = document.getElementById('gate-title');
+      const submitBtn = document.getElementById('gate-submit-btn');
+      const nameBox = document.getElementById('gate-name-box');
+      const passBox = document.getElementById('gate-pass-box');
+      const forgotLink = document.getElementById('gate-forgot-link');
+      const toggleBtn = document.getElementById('gate-toggle-btn');
+      const errBox = document.getElementById('gate-error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (mode === 'signin') {
+        title.innerText = 'Teacher Sign In';
+        submitBtn.innerText = 'Sign In';
+        nameBox.classList.add('hidden');
+        passBox.classList.remove('hidden');
+        forgotLink.classList.remove('hidden');
+        toggleBtn.innerText = 'Need an account? Sign Up';
+      } else if (mode === 'signup') {
+        title.innerText = 'Create Teacher Account';
+        submitBtn.innerText = 'Register & Open App';
+        nameBox.classList.remove('hidden');
+        passBox.classList.remove('hidden');
+        forgotLink.classList.add('hidden');
+        toggleBtn.innerText = 'Already have an account? Sign In';
+      } else if (mode === 'forgot') {
+        title.innerText = 'Reset Password';
+        submitBtn.innerText = 'Send Reset Instructions';
+        nameBox.classList.add('hidden');
+        passBox.classList.add('hidden');
+        forgotLink.classList.add('hidden');
+        toggleBtn.innerText = 'Back to Sign In';
+      }
+    }
+
+    function toggleGateAuthMode() {
+      if (state.gateAuthMode === 'signin') switchGateAuthMode('signup');
+      else switchGateAuthMode('signin');
+    }
+
+    function showGateError(msg) {
+      const errBox = document.getElementById('gate-error');
+      if (errBox) {
+        errBox.innerText = msg;
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function translateFirebaseError(error) {
+      const code = error.code || '';
+      if (code === 'auth/email-already-in-use') return 'This email is already registered. Please click Sign In.';
+      if (code === 'auth/invalid-email') return 'Please enter a valid email address.';
+      if (code === 'auth/weak-password') return 'Password must be at least 6 characters.';
+      if (code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-credential') return 'Incorrect email or password.';
+      if (code === 'auth/operation-not-allowed') return 'Email/Password sign-in is not enabled in Firebase Console. Please enable it under Auth > Sign-in method.';
+      return error.message || 'Authentication failed. Please verify credentials.';
+    }
+
+    function handleGateAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('gate-email').value.trim();
+      const password = document.getElementById('gate-password').value;
+      const fullName = document.getElementById('gate-name').value.trim();
+      const errBox = document.getElementById('gate-error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const submitBtn = document.getElementById('gate-submit-btn');
+      const originalText = submitBtn.innerText;
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Verifying...';
+
+      if (!firebase.apps.length) {
+        firebase.initializeApp(HARDCODED_FIREBASE_CONFIG);
+      }
+
+      const auth = firebase.auth();
+
+      if (state.gateAuthMode === 'signin') {
+        auth.signInWithEmailAndPassword(email, password)
+          .then((cred) => {
+            state.currentUser = cred.user;
+            localStorage.setItem(APP_AUTH_CACHE_KEY, JSON.stringify({ email: cred.user.email, displayName: cred.user.displayName || fullName }));
+            document.getElementById('auth-gate').classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+          })
+          .catch((err) => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+            showGateError(translateFirebaseError(err));
+          });
+      } else if (state.gateAuthMode === 'signup') {
+        auth.createUserWithEmailAndPassword(email, password)
+          .then((cred) => {
+            if (fullName && cred.user) {
+              return cred.user.updateProfile({ displayName: fullName }).then(() => cred);
+            }
+            return cred;
+          })
+          .then((cred) => {
+            state.currentUser = cred.user;
+            const displayName = fullName || cred.user.email.split('@')[0];
+            localStorage.setItem(APP_AUTH_CACHE_KEY, JSON.stringify({ email: cred.user.email, displayName }));
+            const nameEl = document.getElementById('logged-user-name');
+            if (nameEl) nameEl.innerText = displayName.toUpperCase();
+            document.getElementById('auth-gate').classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+            alert("Account created successfully! Welcome to the suite.");
+          })
+          .catch((err) => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+            showGateError(translateFirebaseError(err));
+          });
+      } else if (state.gateAuthMode === 'forgot') {
+        auth.sendPasswordResetEmail(email)
+          .then(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+            alert(`Password reset instructions sent to ${email}.`);
+            switchGateAuthMode('signin');
+          })
+          .catch((err) => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+            showGateError(translateFirebaseError(err));
+          });
+      }
+    }
+
+    function handleSignOutAction() {
+      if (confirm('Are you sure you want to sign out?')) {
+        localStorage.removeItem(APP_AUTH_CACHE_KEY);
+        firebase.auth().signOut().then(() => {
+          document.getElementById('auth-gate').classList.remove('hidden');
+          switchGateAuthMode('signin');
+        }).catch(() => {
+          document.getElementById('auth-gate').classList.remove('hidden');
+          switchGateAuthMode('signin');
+        });
       }
     }
 
@@ -2104,25 +2344,30 @@
         const parsed = JSON.parse(raw);
         localStorage.setItem(APP_STORAGE_KEY_FIREBASE, JSON.stringify(parsed));
         closeModal('modal-firebase');
-        alert('Firebase credentials configured successfully! Reloading to initialize secure cloud protection...');
+        alert('Firebase credentials updated successfully! Reloading...');
         window.location.reload();
       } catch (e) {
-        alert('Invalid JSON format. Please paste a valid Firebase configuration object.');
+        alert('Invalid JSON format. Please verify keys and quotes.');
       }
     }
 
     function syncQuestionsToFirebase() {
       if (state.firestoreDb) {
         try {
-          state.firestoreDb.collection("bai_avabai_security").doc("questions_store").set({
+          state.firestoreDb.collection("bai_avabai_security").doc("master_store").set({
             teacher: "KALPESH H TAILOR",
             designation: "M.Sc, B.Ed, GSET (MATHS)",
             updatedAt: new Date().toISOString(),
             count: state.questions.length,
-            questions: state.questions
-          }, { merge: true });
+            questions: state.questions,
+            blueprintRows: state.blueprintRows,
+            savedBlueprints: state.savedBlueprints,
+            archivedPapers: state.archivedPapers
+          }, { merge: true }).catch(e => {
+            console.error("Firebase sync error:", e);
+          });
         } catch (e) {
-          console.error("Firebase sync error:", e);
+          console.error("Firebase sync exception:", e);
         }
       }
     }
@@ -2167,7 +2412,7 @@
             return;
           }
 
-          if (confirm(`Restore data backup from "${file.name}"?\nFound ${imported.questions.length} questions.`)) {
+          if (confirm(`Restore data backup from "${file.name}"?\n${imported.questions.length} questions will be saved permanently to Firebase Cloud and made visible across ALL devices.`)) {
             state.questions = imported.questions;
             if (imported.blueprintRows) state.blueprintRows = imported.blueprintRows;
             if (imported.livePaperQuestions) state.livePaperQuestions = imported.livePaperQuestions;
@@ -2175,13 +2420,19 @@
             if (imported.savedBlueprints) state.savedBlueprints = imported.savedBlueprints;
             if (imported.archivedPapers) state.archivedPapers = imported.archivedPapers;
 
-            persistQuestions();
+            // Save to browser cache
+            localStorage.setItem(APP_STORAGE_KEY_Q, JSON.stringify(state.questions));
             localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
             localStorage.setItem(APP_STORAGE_KEY_PAPER, JSON.stringify(state.livePaperQuestions));
             localStorage.setItem(APP_STORAGE_KEY_GUJCET_PAPER, JSON.stringify(state.gujcetPaperQuestions));
             localStorage.setItem(APP_STORAGE_KEY_BLUEPRINTS, JSON.stringify(state.savedBlueprints));
             localStorage.setItem(APP_STORAGE_KEY_ARCHIVE, JSON.stringify(state.archivedPapers));
 
+            // Push directly to Firebase Firestore
+            syncQuestionsToFirebase();
+
+            // Refresh UI
+            updateQuestionCountBadge();
             renderMatrixTable();
             renderPreviousBlueprints();
             filterQuestionBank();
@@ -2189,7 +2440,7 @@
             renderGujcetPaperList();
             renderArchiveList();
 
-            alert('RESTORE SUCCESSFUL! Your Question Bank, GUJCET, and Blueprint data are restored.');
+            alert('CLOUD RESTORE SUCCESSFUL!\n\nYour entire question repository and blueprints are stored in Firebase. They are now permanent across all your devices.');
           }
         } catch (err) {
           alert('Error reading backup file. Please ensure it is a valid .json backup file.');
@@ -2425,7 +2676,7 @@
       }
     }
 
-    /* 12. FIXED ADD CHAPTER TO SUBJECT */
+    /* 12. ADD CHAPTER TO SUBJECT */
     function openAddChapterModal() {
       let activeStd = 'Std 10';
       const matrixStdEl = document.getElementById('matrix-filter-std');
@@ -2504,6 +2755,7 @@
         c2: 0
       });
       localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
+      syncQuestionsToFirebase();
 
       const chapDropdown = document.getElementById('filter-chap');
       if (chapDropdown) {
@@ -2663,6 +2915,7 @@
         if (field === 'name') row[field] = value;
         else row[field] = parseInt(value) || 0;
         localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
+        syncQuestionsToFirebase();
         renderMatrixTable();
       }
     }
@@ -2685,6 +2938,7 @@
         c2: 0
       });
       localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
+      syncQuestionsToFirebase();
       renderMatrixTable();
     }
 
@@ -2692,6 +2946,7 @@
       if (confirm('Remove this chapter from the matrix?')) {
         state.blueprintRows = state.blueprintRows.filter(r => r.id !== id);
         localStorage.setItem(APP_STORAGE_KEY_MATRIX, JSON.stringify(state.blueprintRows));
+        syncQuestionsToFirebase();
         renderMatrixTable();
       }
     }
@@ -2849,7 +3104,7 @@
 
           <div class="pt-2 border-t border-slate-200 flex items-center space-x-2">
             <button onclick="loadAndGenerateFromBlueprint('${bp.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow flex items-center justify-center space-x-1">
-              <i data-lucide="play" class="w-3 h-3"></i>
+              <i data-lucide="play" class="w-3.5 h-3.5"></i>
               <span>Directly Generate</span>
             </button>
             <button onclick="deleteBlueprintPreset('${bp.id}')" class="p-1.5 text-rose-600 hover:bg-rose-100 rounded" title="Delete Preset">
@@ -2916,6 +3171,7 @@
 
       state.savedBlueprints.unshift(newPreset);
       localStorage.setItem(APP_STORAGE_KEY_BLUEPRINTS, JSON.stringify(state.savedBlueprints));
+      syncQuestionsToFirebase();
       renderPreviousBlueprints();
       alert('Blueprint preset saved successfully!');
     }
@@ -2924,6 +3180,7 @@
       if (confirm('Delete this blueprint preset?')) {
         state.savedBlueprints = state.savedBlueprints.filter(b => b.id !== id);
         localStorage.setItem(APP_STORAGE_KEY_BLUEPRINTS, JSON.stringify(state.savedBlueprints));
+        syncQuestionsToFirebase();
         renderPreviousBlueprints();
       }
     }
@@ -2990,7 +3247,7 @@
                 </div>
                 <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg">
                   <p class="text-[10px] font-bold uppercase text-emerald-800 flex items-center space-x-1">
-                    <i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i>
+                    <i data-lucide="check-circle" class="w-3 text-emerald-600"></i>
                     <span>Answer / Solution Key:</span>
                   </p>
                   <p class="text-xs text-emerald-950 font-bold mt-0.5 leading-relaxed">${q.answer || 'No solution specified.'}</p>
@@ -3844,6 +4101,7 @@
 
       state.archivedPapers.unshift(record);
       localStorage.setItem(APP_STORAGE_KEY_ARCHIVE, JSON.stringify(state.archivedPapers));
+      syncQuestionsToFirebase();
       alert('Examination paper archived successfully!');
       renderArchiveList();
     }
@@ -3900,14 +4158,16 @@
       if (confirm('Delete this saved paper from archive?')) {
         state.archivedPapers = state.archivedPapers.filter(p => p.id !== id);
         localStorage.setItem(APP_STORAGE_KEY_ARCHIVE, JSON.stringify(state.archivedPapers));
+        syncQuestionsToFirebase();
         renderArchiveList();
       }
     }
 
     function clearAllArchivedPapers() {
-      if (confirm('Clear all saved papers from this browser?')) {
+      if (confirm('Clear all saved papers from this browser and cloud?')) {
         state.archivedPapers = [];
         localStorage.removeItem(APP_STORAGE_KEY_ARCHIVE);
+        syncQuestionsToFirebase();
         renderArchiveList();
       }
     }
@@ -3992,61 +4252,6 @@
       if (el) el.classList.add('hidden');
     }
 
-    function openAuthModal(mode) {
-      switchAuthMode(mode || 'signin');
-      openModal('modal-auth');
-    }
-
-    function switchAuthMode(mode) {
-      state.authMode = mode;
-      const title = document.getElementById('auth-modal-title');
-      const submitBtn = document.getElementById('auth-submit-btn');
-      const nameBox = document.getElementById('auth-name-container');
-      const passBox = document.getElementById('auth-pass-container');
-      const forgotLink = document.getElementById('auth-forgot-link');
-      const toggleBtn = document.getElementById('auth-toggle-btn');
-
-      if (mode === 'signin') {
-        title.innerText = 'Teacher Sign In';
-        submitBtn.innerText = 'Sign In to Portal';
-        nameBox.classList.add('hidden');
-        passBox.classList.remove('hidden');
-        forgotLink.classList.remove('hidden');
-        toggleBtn.innerText = 'Need an account? Sign Up';
-      } else if (mode === 'signup') {
-        title.innerText = 'Create Teacher Account';
-        submitBtn.innerText = 'Create Account';
-        nameBox.classList.remove('hidden');
-        passBox.classList.remove('hidden');
-        forgotLink.classList.add('hidden');
-        toggleBtn.innerText = 'Already have account? Sign In';
-      } else if (mode === 'forgot') {
-        title.innerText = 'Reset Password';
-        submitBtn.innerText = 'Send Reset Instructions';
-        nameBox.classList.add('hidden');
-        passBox.classList.add('hidden');
-        forgotLink.classList.add('hidden');
-        toggleBtn.innerText = 'Back to Sign In';
-      }
-    }
-
-    function toggleAuthSignMode() {
-      if (state.authMode === 'signin') switchAuthMode('signup');
-      else switchAuthMode('signin');
-    }
-
-    function handleAuthSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('auth-email').value;
-      if (state.authMode === 'forgot') {
-        alert(`Reset instructions sent to ${email}.`);
-        switchAuthMode('signin');
-      } else {
-        alert(`Welcome, Kalpesh H Tailor (M.Sc, B.Ed, GSET)! Signed into BAI AVABAI HIGHSCHOOL Exam Suite.`);
-        closeModal('modal-auth');
-      }
-    }
-
     function escapeHtml(string) {
       if (!string) return '';
       return String(string)
@@ -4056,5 +4261,7 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
-</script>
+  </script>
+
+</body>
 </html>
