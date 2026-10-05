@@ -1,5 +1,5 @@
 // sw.js - Change this version number whenever you update your app
-const APP_VERSION = 'v1.0.0';
+const APP_VERSION = 'v1.0.1';
 const CACHE_NAME = `sigma-app-${APP_VERSION}`;
 
 // Files cached for offline access
